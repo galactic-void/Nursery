@@ -116,17 +116,17 @@ abstract class AbstractResponse
      * 
      * 
      * 
-     * @var aura\Mime\Mime
+     * @var aura\Mime\Utility
      * 
      */
-    protected $mime;
+    protected $mime_utility;
 
 
 
 
-    public function __construct(aura\Mime\Mime $mime)
+    public function __construct(aura\Mime\Utility $mime_utility)
     {
-        $this->mime = $mime;
+        $this->mime_utility = $mime_utility;
     }
     
     /**
@@ -317,7 +317,7 @@ abstract class AbstractResponse
     public function setHeader($key, $val, $replace = true)
     {
         // normalize the header key
-        $key = $this->mime->headerLabel($key);
+        $key = $this->mime_utility->headerLabel($key);
         
         // disallow HTTP header
         $lower = strtolower($key);
@@ -360,7 +360,7 @@ abstract class AbstractResponse
         }
         
         // normalize the header key
-        $key = $this->mime->headerLabel($key);
+        $key = $this->mime_utility->headerLabel($key);
         
         if (! empty($this->headers[$key])) {
             return $this->headers[$key];

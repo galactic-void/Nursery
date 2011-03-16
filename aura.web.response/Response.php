@@ -40,9 +40,9 @@ class Response extends AbstractResponse
     protected $cookies_httponly = true;
     
     
-    public function __construct(aura\Mime\Mime $mime, aura\XXX\Uri $uri)
+    public function __construct(aura\Mime\Utility $mime_utility, aura\XXX\Uri $uri)
     {
-        parent::__construct($mime);
+        parent::__construct($mime_utility);
         $this->uri = $uri;
     }
     
@@ -149,7 +149,7 @@ class Response extends AbstractResponse
             // external link, protect against header injections
             $href = str_replace(array("\r", "\n"), '', $spec);
         } else {
-            // todo LogicException if no aura\uri
+            // todo LogicException if no aura\uri?
             $href = $this->uri->quick($spec, true);
         }
         
