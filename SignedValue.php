@@ -4,10 +4,18 @@ class SignedValue
 {
     const SEPARATOR = '|';
     
-    /**  @var string  */
+    /**
+     * 
+     *  @var string  
+     * 
+     */
     protected $hash_algo;
     
-    /**  @var string  */
+    /**  
+     * 
+     * @var string
+     * 
+     */
     protected $secret_key;
     
     /**

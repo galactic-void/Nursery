@@ -27,9 +27,6 @@ namespace aura\web;
  */
 class Response extends AbstractResponse
 {
-    protected $uri;
-
-
     /**
      * 
      * Whether or not cookies should default being sent by HTTP only.
@@ -40,10 +37,9 @@ class Response extends AbstractResponse
     protected $cookies_httponly = true;
     
     
-    public function __construct(aura\Mime\Utility $mime_utility, aura\XXX\Uri $uri)
+    public function __construct(aura\Mime\Utility $mime_utility)
     {
         parent::__construct($mime_utility);
-        $this->uri = $uri;
     }
     
     /**
@@ -131,7 +127,7 @@ class Response extends AbstractResponse
      * Issues an immediate "Location" redirect.  Use instead of display()
      * to perform a redirect.  You should die() or exit() after calling this.
      * 
-     * @param Solar_Uri_Action|string $spec The URI to redirect to.
+     * @param aura\XXX\Uri|string $href The URI to redirect to.
      * 
      * @param int|string $code The HTTP status code to redirect with; default
      * is '302 Found'.
@@ -141,16 +137,14 @@ class Response extends AbstractResponse
      * @throws aura\web\Exception No URI.
      * 
      */
-    public function redirect($spec, $code = '302')
+    public function redirect($href, $code = '302')
     {
-        if ($spec instanceof aura\XXX\Uri) { // xxx
-            $href = $spec->get(true);
-        } elseif (strpos($spec, '://') !== false) {
+        if ($href instanceof aura\XXX\Uri) { // xxx
+            // make $href a string
+            $href = $href->get(true);
+        } else if (strpos($href, '://') !== false) {
             // external link, protect against header injections
-            $href = str_replace(array("\r", "\n"), '', $spec);
-        } else {
-            // todo LogicException if no aura\uri?
-            $href = $this->uri->quick($spec, true);
+            $href = str_replace(array("\r", "\n"), '', $href);
         }
         
         // kill off all output buffers
@@ -159,7 +153,7 @@ class Response extends AbstractResponse
         // make sure there's actually an href
         $href = trim($href);
         if (! $href) {
-            throw new Exception('No URI cannot redirect.');
+            throw new Exception('No URI; cannot redirect.');
         }
         
         // set the status code
