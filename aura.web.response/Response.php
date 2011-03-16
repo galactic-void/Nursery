@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * 
+ * This file is part of the Aura project for PHP.
+ * 
+ * @license http://opensource.org/licenses/bsd-license.php BSD
+ * 
+ */
 namespace aura\web;
 
 /**
@@ -20,8 +26,6 @@ namespace aura\web;
  * 
  * @author Paul M. Jones <pmjones@solarphp.com>
  * 
- * @license http://opensource.org/licenses/bsd-license.php BSD
- * 
  * @todo Add charset param so that headers get sent with right encoding?
  * 
  */
@@ -36,11 +40,6 @@ class Response extends AbstractResponse
      */
     protected $cookies_httponly = true;
     
-    
-    public function __construct(aura\Mime\Utility $mime_utility)
-    {
-        parent::__construct($mime_utility);
-    }
     
     /**
      * 
@@ -196,6 +195,8 @@ class Response extends AbstractResponse
      * is '303 See Other'.
      * 
      * @return void
+     * 
+     * @see <http://en.wikipedia.org/wiki/Post/Redirect/Get>
      * 
      * @see <http://www.theserverside.com/tt/articles/article.tss?l=RedirectAfterPost>
      * 

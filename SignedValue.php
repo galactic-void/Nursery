@@ -122,7 +122,8 @@ class SignedValue
      */
     public function sign($value, $expires = null)
     {
-        // value|time|expire|signature
+        // base64-value|time|expire|signature
+        // todo base64 err? | 64 all?
         $value = base64_encode($value);
         $time  = time();
         $value = $value . static::SEPARATOR . 

@@ -1,7 +1,22 @@
 <?php
-
+/**
+ * 
+ * This file is part of the Aura project for PHP.
+ * 
+ * @license http://opensource.org/licenses/bsd-license.php BSD
+ * 
+ */
 namespace aura\web;
 
+use aura\mime\Utility as MimeUtility;
+
+/**
+ * 
+ * Functionality shared by Response and ResourceResponse.
+ * 
+ * @package aura.web
+ * 
+ */
 abstract class AbstractResponse
 {
     /**
@@ -114,9 +129,9 @@ abstract class AbstractResponse
     
     /**
      * 
+     * Mime utility.
      * 
-     * 
-     * @var aura\Mime\Utility
+     * @var aura\mime\Utility
      * 
      */
     protected $mime_utility;
@@ -124,7 +139,7 @@ abstract class AbstractResponse
 
 
 
-    public function __construct(aura\Mime\Utility $mime_utility)
+    public function __construct(MimeUtility $mime_utility)
     {
         $this->mime_utility = $mime_utility;
     }
@@ -143,20 +158,27 @@ abstract class AbstractResponse
      */
     public function __get($key)
     {
-        $valid = array('content', 'header', 'cookie', 'version', 
-                       'status_code', 'status_text');
+        $valid = array(
+            'content'     => 'content',
+            'header'      => 'headers',
+            'cookie'      => 'cookies',
+            'version'     => 'version', 
+            'status_code' => 'status_code',
+            'status_text' => 'status_text'
+        );
         
-        if (in_array($key, $valid)) {
-            return $this->$key;
+        if (empty($valid[$key])) {
+            throw new \LogicException("'{$key}' is protected or does not exist.");
         }
         
-        throw new \LogicException("'{$key}' is protected or does not exist.");
+        return $this->$valid[$key];
     }
     
     /**
      *
-     * Magic set to access the properties content, header, version, status_code
-     * and status_text. Cookies must be set using the setCookie() method.
+     * Magic set to access the properties content, version, status_code
+     * and status_text. Headers and cookies must be set using their
+     * respective methods.
      * 
      * @param string $key
      * 
@@ -167,15 +189,18 @@ abstract class AbstractResponse
      */
     public function __set($key, $value)
     {
-        $valid = array('content', 'header', 
-                       'version', 'status_code', 'status_text');
+        $valid = array(
+            'content'     => 'setContent',
+            'version'     => 'setVersion', 
+            'status_code' => 'setStatusCode',
+            'status_text' => 'setStatusText'
+        );
         
-        if (! in_array($key, $xxx)) {
+        if (empty($valid[$key])) {
             throw new \LogicException("'{$key}' is protected or does not exist.");
         }
         
-        $key = 'set' . ucfirst($key);
-        $this->{$key}($value);
+        $this->{$valid[$key]}($value);
     }
     
     /**
