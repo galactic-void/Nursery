@@ -56,6 +56,11 @@ class Response extends AbstractResponse
         return (string) $this->content;
     }
     
+    public function __invoke()
+    {
+        return $this->__toString();
+    }
+    
     /**
      * 
      * By default, should cookies be sent by HTTP only?
@@ -138,7 +143,7 @@ class Response extends AbstractResponse
      */
     public function redirect($href, $code = '302')
     {
-        if ($href instanceof aura\XXX\Uri) { // xxx
+        if ($href instanceof aura\uri\Builder) {
             // make $href a string
             $href = $href->get(true);
         } else if (strpos($href, '://') !== false) {

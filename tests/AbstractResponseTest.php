@@ -10,14 +10,12 @@ require_once 'aura.web.response/AbstractResponse.php';
 require_once 'aura.web.response/Utility.php';
 
 
-class ConcreteAbstractResponse extends AbstractResponse {}
-
 class AbstractResponseTest extends \PHPUnit_Framework_TestCase
 {
 
     protected function newAbstractResponse()
     {
-        return new ConcreteAbstractResponse(new Utility);
+        return $this->getMockForAbstractClass('\aura\web\AbstractResponse', array(new Utility()));
     }
 
     public function test__get()

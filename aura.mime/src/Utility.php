@@ -30,19 +30,14 @@ class Utility
      * 
      * @param string $charset The character set to note when encoding.
      * 
-     * @param string $crlf The CRLF line-ending string to use when wrapping.
-     * 
-     * @param string $len The line-length to wrap at.
-     * 
      * @return string The sanitized, encoded, and wrapped header-line.  Note
      * that there is no terminating linefeed.
      * 
      */
-    public function headerLine($label, $value, $charset = 'utf-8',
-        $crlf = "\r\n", $len = 75)
+    public function headerLine($label, $value, $charset = 'utf-8')
     {
         $label = $this->headerLabel($label);
-        $value = $this->headerValue($label, $value, $charset, $crlf, $len);
+        $value = $this->headerValue($label, $value, $charset);
         return "$label: $value";
     }
     
@@ -92,15 +87,10 @@ class Utility
      * 
      * @param string $charset The character set to note when encoding.
      * 
-     * @param string $crlf The CRLF line-ending string to use when wrapping.
-     * 
-     * @param string $len The line-length to wrap at.
-     * 
      * @return string The encoded header value.
      * 
      */
-    public function headerValue($label, $value, $charset = 'utf-8',
-        $crlf = "\r\n", $len = 75)
+    public function headerValue($label, $value, $charset = 'utf-8')
     {
         // remove all instances of newline-with-space to unwrap lines
         $value = preg_replace('/(\r\n|\r|\n)([ \t]+)/m', '', $value);
@@ -125,8 +115,8 @@ class Utility
                 $previous .= $hdr_val;
                 continue;
             } else {
-                $hdr_val = $previous . $hdr_val;
-                $previous = "";
+                $hdr_val   = $previous . $hdr_val;
+                $previous  = '';
             }
             
             // any non-ascii characters?
@@ -140,13 +130,13 @@ class Utility
                 // so later we can concat the encoded string and the double quotes back 
                 // together to get the intended string.
                 $quotePrefix = $quoteSuffix = '';
-                if ($hdr_val{0} == '"') {
-                    $hdr_val = substr($hdr_val, 1);
+                if ($hdr_val[0] == '"') {
+                    $hdr_val     = substr($hdr_val, 1);
                     $quotePrefix = '"';
                 }
                 
-                if ($hdr_val{strlen($hdr_val)-1} == '"') {
-                    $hdr_val = substr($hdr_val, 0, -1);
+                if ($hdr_val[strlen($hdr_val)-1] == '"') {
+                    $hdr_val     = substr($hdr_val, 0, -1);
                     $quoteSuffix = '"';
                 }
                 
@@ -160,7 +150,7 @@ class Utility
                 // the translated chars. The -2 on the first line-regexp is
                 // to compensate for the ": " between the header-name and the
                 // header value.
-                $maxLength        = $len - strlen($prefix . $suffix) - 2;
+                $maxLength        = 75 - strlen($prefix . $suffix) - 2; // 75 = line-length to wrap at.
                 $maxLength1stLine = $maxLength - strlen($label) - 2;
                 
                 // Replace all special characters used by the encoder.
@@ -170,9 +160,12 @@ class Utility
                 
                 // Replace all extended characters (\x80-xFF) with their
                 // ASCII values.
+                $callback = function ($matches) {
+                    return '=' . strtoupper(dechex(ord($matches[1])));
+                };
                 $hdr_val = preg_replace_callback(
                     '/([\x80-\xFF])/',
-                    array($this, 'qpReplace'),
+                    $callback,
                     $hdr_val
                 );
                 
@@ -216,7 +209,7 @@ class Utility
                     // RFC 2047 specifies that any split header should be
                     // separated by a CRLF SPACE. 
                     if ($output){
-                        $output .= "$crlf ";
+                        $output .= "\r\n ";
                     }
                     
                     $output .= $prefix . $part . $suffix;
@@ -233,62 +226,16 @@ class Utility
     
     /**
      * 
-     * Applies "quoted-printable" encoding to text.
-     * 
-     * Code taken from <http://us3.php.net/manual/en/ref.stream.php/70826>.
-     * 
-     * @param string $text The text to encode.
-     * 
-     * @param string $crlf The line-ending to use; default "\r\n".
-     * 
-     * @param int $len Break lines at this length; default 75.
-     * 
-     * @return string The encoded text.
-     * 
-     */
-    public function encodeQp($text, $crlf = "\r\n", $len = 75)
-    {
-        // open a "temp" stream pointer
-        $fp = fopen('php://temp/', 'r+');
-        
-        // make sure we break at $len lines with $crlf line-endings
-        $params = array('line-length' => $len, 'line-break-chars' => $crlf);
-        stream_filter_append(
-            $fp,
-            'convert.quoted-printable-encode',
-            STREAM_FILTER_READ,
-            $params
-        );
-        
-        // put the text into the stream
-        fputs($fp, $text);
-        
-        // rewind the pointer and retrieve the the content, which will
-        // encode as it reads
-        rewind($fp);
-        $output = stream_get_contents($fp);
-        
-        // close the stream and return
-        fclose($fp);
-        return $output;
-    }
-    
-    /**
-     * 
      * Applies "base64" encoding to text.
      * 
      * @param string $text The text to encode.
      * 
-     * @param string $crlf The line-ending to use; default "\r\n".
-     * 
-     * @param int $len Break lines at this length; default 75.
-     * 
      * @return string The encoded text.
      * 
      */
-    public function encodeBase64($text, $crlf = "\r\n", $len = 75)
+    public function encodeBase64($text)
     {
-        return rtrim(chunk_split(base64_encode($text), $len, $crlf));
+        return rtrim(chunk_split(base64_encode($text)));
     }
     
     /**
@@ -300,22 +247,20 @@ class Utility
      * 
      * @param string $text The text to encode.
      * 
-     * @param string $crlf The line-ending to use; default "\r\n".
-     * 
      * @return string The encoded text.
      * 
      * @throws aura\mime\Exception Unknown mine type.
      * 
      */
-    public function encode($type, $text, $crlf)
+    public function encode($type, $text)
     {
         switch (strtolower($type)) {
         case 'base64':
-            return $this->encodeBase64($text, $crlf);
+            return $this->encodeBase64($text);
             break;
         
         case 'quoted-printable':
-            return $this->encodeQp($text, $crlf);
+            return quoted_printable_encode($text);
             break;
         
         case '7bit':
@@ -327,20 +272,5 @@ class Utility
             throw new Exception('Unknown mime type.');
             break;
         }
-    }
-    
-    /**
-     * 
-     * Callback from the headerValue() method.
-     * 
-     * @param array $matches Matches from preg_replace_callback().
-     * 
-     * @return string The value of $matches[1] with non-ASCII characters
-     * encoded for quoted-printable.
-     * 
-     */
-    protected function qpReplace($matches)
-    {
-        return '=' . strtoupper(dechex(ord($matches[1])));
     }
 }
