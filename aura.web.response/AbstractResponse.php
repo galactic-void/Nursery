@@ -324,9 +324,9 @@ abstract class AbstractResponse
      * the [[aura\web\Response::setStatusCode() | ]] and 
      * [[aura\web\Response::setStatusText() | ]] methods instead.
      * 
-     * @param string $key The header label, such as "Content-Type".
+     * @param string $name The header label, such as "Content-Type".
      * 
-     * @param string $val The value for the header.
+     * @param string $val  The value for the header.
      * 
      * @param bool $replace This header value should replace any previous
      * values of the same key.  When false, the same header key is sent
@@ -339,13 +339,13 @@ abstract class AbstractResponse
      * @see [[php::header() | ]]
      * 
      */
-    public function setHeader($key, $val, $replace = true)
+    public function setHeader($name, $val, $replace = true)
     {
         // normalize the header key
-        $key = $this->mime_utility->headerLabel($key);
+        $name = $this->mime_utility->headerLabel($name);
         
         // disallow HTTP header
-        $lower = strtolower($key);
+        $lower = strtolower($name);
         if ($lower == 'http') {
             $msg = 'Cannot set HTTP headers. ' .
                    'Use setStatusCode() / setStatusText() instead.';
@@ -353,13 +353,30 @@ abstract class AbstractResponse
         }
         
         // add the header to the list
-        if ($replace || empty($this->headers[$key])) {
+        if ($replace || empty($this->headers[$name])) {
             // replacement, or first instance of the key
-            $this->headers[$key] = $val;
+            $this->headers[$name] = $val;
         } else {
             // second or later instance of the key
-            settype($this->headers[$key], 'array');
-            $this->headers[$key][] = $val;
+            settype($this->headers[$name], 'array');
+            $this->headers[$name][] = $val;
+        }
+        
+        return $this;
+    }
+    
+    public function setHeaders(array $headers)
+    {
+        $default = array('name' => null, 'value' => null, 'replace' => false);
+        
+        foreach ($headers as $header) {
+            list($name, $value, $replace) = array_merge($header, $default);
+            
+            if (! $name || ! $value) {
+                throw new \LogicException();// todo (option to) skip instead
+            }
+            
+            $this->setHeader($name, $value, $replace);
         }
         
         return $this;
@@ -427,7 +444,7 @@ abstract class AbstractResponse
      * 
      * @param string $name The name of the cookie.
      * 
-     * @param string $value The value of the cookie.
+     * @param string $val  The value of the cookie.
      * 
      * @param int|string $expires The Unix timestamp after which the cookie
      * expires.  If non-numeric, the method uses strtotime() on the value.
@@ -449,17 +466,43 @@ abstract class AbstractResponse
      * @see [[php::setcookie() | ]]
      * 
      */
-    public function setCookie($name, $value = '', $expires = 0,
+    public function setCookie($name, $val = '', $expires = 0,
         $path = '', $domain = '', $secure = false, $httponly = null)
     {
         $this->cookies[$name] = array(
-            'value'     => $value,
+            'value'     => $val,
             'expires'   => $expires,
             'path'      => $path,
             'domain'    => $domain,
             'secure'    => $secure,
             'httponly'  => $httponly,
         );
+        
+        return $this;
+    }
+    
+    public function setCookies(array $cookies)
+    {
+        $default = array(
+            'name'     => null,
+            'value'    => '',
+            'expires'  => 0,
+            'path'     => '',
+            'domain'   => '',
+            'secure'   => false,
+            'httponly' => null,
+        );
+        
+        foreach ($cookies as $cookie) {
+            $cookie = array_merge($cookie, $default);
+            list($name, $val, $exp, $path, $domain, $secure, $httponly) = $cookie;
+            
+            if (! $name) {
+                throw new \LogicException();// todo (option to) skip instead
+            }
+            
+            $this->setCookie($name, $val, $exp, $path, $domain, $secure, $httponly);
+        }
         
         return $this;
     }
