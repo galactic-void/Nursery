@@ -6,9 +6,7 @@
  * @license http://opensource.org/licenses/bsd-license.php BSD
  * 
  */
-namespace aura\uri;
-
-use aura\web\Context as WebContext;
+namespace aura\http;
 
 /**
  * 
@@ -117,14 +115,14 @@ use aura\web\Context as WebContext;
  *     query    => array('baz' => 'dib')
  *     fragment => 'anchor'
  * 
- * @package aura.uri
+ * @package aura.http
  * 
  * @author Paul M. Jones <pmjones@solarphp.com>
  * 
  * @todo put above into manual and simplify desc | tainted data warning
  * 
  */
-class Builder
+class Uri
 {
     /**
      * 
@@ -291,20 +289,24 @@ class Builder
      * 
      */
     protected $construct_uri;
-
+    
+    protected $webcontext;
+    
+    
 
     /**
      * 
      * 
      * 
      */
-    public function __construct(WebContext $webcontext, $uri = null)
+    public function __construct(\aura\web\Context $webcontext, $uri = null)
     {
         $this->webcontext = $webcontext;
         
+        $this->set($uri);
+        
         if ($uri) {
             $this->construct_uri = $uri;
-            $this->set($uri);
         }
     }
 
@@ -331,7 +333,7 @@ class Builder
      * 
      * @return void
      * 
-     * @throws \LogicException 
+     * @throws \UnexpectedValueException 
      * 
      */
     public function __set($key, $val)
@@ -342,7 +344,7 @@ class Builder
         );
         
         if (! in_array($key, $vaild)) {
-            throw new \LogicException("'{$key}' is protected or does not exist.");
+            throw new \UnexpectedValueException("'{$key}' is protected or does not exist.");
         }
         
         $this->$key = $val;
@@ -357,10 +359,10 @@ class Builder
      * 
      * @return mixed
      * 
-     * @throws \LogicException 
+     * @throws \UnexpectedValueException 
      * 
      */
-    public function __get($key)
+    public function &__get($key)
     {
         $vaild = array(
             'scheme', 'host', 'port', 'user', 'pass', 'path', 'format',
@@ -368,10 +370,10 @@ class Builder
         );
         
         if (! in_array($key, $vaild)) {
-            throw new \LogicException("'{$key}' is protected or does not exist.");
+            throw new \UnexpectedValueException("'{$key}' is protected or does not exist.");
         }
         
-        if ($key == 'query' && ! $this->query) {
+        if ('query' == $key && null === $this->query) {
             $this->loadQuery();
         }
         
@@ -427,37 +429,21 @@ class Builder
         // forcibly set to the current uri?
         $uri = trim($uri);
         if (! $uri) {
-            
             // we're forcing values
             $forced = true;
             
             // add the scheme and host
-            $uri = $scheme . $host;
+            $uri  = $scheme . $host;
             
-            // we need to see if mod_rewrite is turned on or off.
-            // if on, we can use REQUEST_URI as-is.
-            // if off, we need to use the script name, esp. for
-            // front-controller stuff.
-            // we make a guess based on the 'path' config key.
-            // if it ends in '.php' then we guess that mod_rewrite is off.
-            if (substr($this->_config['path'], -5) == '.php/') { // xxx ???
-                // guess that mod_rewrite is off; build up from 
-                // component parts.
-                $uri .= $this->webcontext->getServer('SCRIPT_NAME')
-                      . $this->webcontext->getServer('PATH_INFO')
-                      . '?' . $this->webcontext->getServer('QUERY_STRING');
-            } else {
-                // guess that mod_rewrite is on
-                $uri .= $this->webcontext->getServer('REQUEST_URI');
-            }
+            // todo
+            $uri .= $this->webcontext->getServer('REQUEST_URI');
         }
         
         // forcibly add the scheme and host?
-        $pos = strpos($uri, '://');
-        if ($pos === false) {
+        if (false === strpos($uri, '://')) {
             $forced = true;
-            $uri = ltrim($uri, '/');
-            $uri = "$scheme$host/$uri";
+            $uri    = ltrim($uri, '/');
+            $uri    = "$scheme$host/$uri";
         }
         
         // default uri elements
@@ -528,14 +514,20 @@ class Builder
             // add the host and port, if any.
             $uri .= (empty($this->host) ? '' : urlencode($this->host))
                   . (empty($this->port) ? '' : ':' . (int) $this->port);
+            
+            $uri .= '/';
         }
         
         // get the query as a string
         $query = $this->getQuery();
+        $path  = $this->getPath();
         
+        if (empty($path)) {
+            $uri = trim($uri, '/');
+        }
         // add the rest of the URI. we use trim() instead of empty() on string
         // elements to allow for string-zero values.
-        return $uri . $this->getPath()
+        return $uri . $path
              . (empty($query)                ? '' : '?' . $query)
              . (trim($this->fragment) === '' ? '' : '#' . urlencode($this->fragment));
     }
@@ -580,6 +572,12 @@ class Builder
         
         // reset the parsed version
         $this->query = null;
+    }
+    
+    public function setQueryPart($name, $value)
+    {
+        $query        = &$this->__get('query');
+        $query[$name] = $value;
     }
     
     /**
@@ -703,12 +701,10 @@ class Builder
      */
     protected function pathEncode($spec)
     {
-        if (is_string($spec)) {
-            $spec = explode('/', $spec);
-        }
         $keys = array_keys($this->encode_path);
         $vals = array_values($this->encode_path);
-        $out = array();
+        $out  = array();
+        
         foreach ((array) $spec as $elem) {
             $out[] = str_replace($keys, $vals, $elem);
         }
