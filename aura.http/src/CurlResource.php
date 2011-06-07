@@ -3,10 +3,11 @@
 namespace aura\http;
 
 use aura\http\Uri as Uri;
-use aura\http\MimeUtility as MimeUtility;
 
-class CurlResource extends AbstractResource
+
+class CurlResource extends Resource
 {
+    
     
     /**
      * 
@@ -19,35 +20,35 @@ class CurlResource extends AbstractResource
      * @author Bahtiar Gadimov <bahtiar@gadimov.de>
      * 
      */
-    public function __construct(Uri $uri, MimeUtility $mime_utility, array $opts = array())
+    public function __construct(
+        Uri $uri, 
+        ResourceResponse $resource_response,
+//        CookieJar        $cookie_jar = null
+        array $opts = array())
     {
         if (! extension_loaded('curl')) {
             throw new Exception('Curl extension is not loaded.');
         }
         
-        parent::__construct($uri, $mime_utility, $opts);
+        parent::__construct($uri, $resource_response, $opts);
+        /*
+        $this->resource_response = $resource_response;
+  //      $this->cookie_jar        = $cookie_jar;
+        $this->response_stack    = new \SplStack();
+        */
     }
 
     /**
      * 
-     * Support method to make the request, then return headers and content.
-     * 
-     * @param string $uri The URI get a response from.
-     * 
-     * @param array $headers A sequential array of header lines for the request.
-     * 
-     * @param string $content A string of content for the request.
-     * 
-     * @return array A sequential array where element 0 is a sequential array of
-     * header lines, and element 1 is the body content.
      * 
      * @todo Implement an exception for timeouts.
      * 
      */
-    protected function adapterFetch($uri, $headers, $content)
+    public function exec()
     {
+      //  $this->request = $request;
         // prepare the connection and get the response
-        $ch = $this->prepareCurlHandle($uri, $headers, $content);
+        $ch       = $this->setUp();
         $response = curl_exec($ch);
         
         // did we hit any errors?
@@ -57,7 +58,6 @@ class CurlResource extends AbstractResource
         
         // get the metadata and close the connection
         $meta = curl_getinfo($ch);
-        curl_close($ch);
         
         // get the header lines from the response
         $headers = explode(
@@ -68,8 +68,15 @@ class CurlResource extends AbstractResource
         // get the content portion from the response
         $content = substr($response, $meta['header_size']);
         
-        // done!
-        return array($headers, $content);
+        curl_close($ch);
+        
+        $this->saveResponse($headers, $content);
+        
+        if ($this->response_stack->isEmpty()) {
+            throw new Exception_EmptyResponse();
+        }
+        
+        return $this->response_stack;
     }
     
     /**
@@ -89,94 +96,103 @@ class CurlResource extends AbstractResource
      * @todo HTTP Authentication
      * 
      */
-    protected function prepareCurlHandle($uri, $headers, $content)
+    protected function setUp()
     {
-        /**
-         * the basic handle and the url for it
-         */
-        $ch = curl_init($uri);
+        $ch = curl_init($this->resource_uri->get(true));
         
-        /**
-         * request method
-         */
-        switch ($this->method) {
-        case Resource::METHOD_GET:
-            curl_setopt($ch, CURLOPT_HTTPGET, true);
-            break;
-        case Resource::METHOD_POST:
-            curl_setopt($ch, CURLOPT_POST, true);
-            break;
-        case Resource::METHOD_PUT:
-            curl_setopt($ch, CURLOPT_PUT, true);
-            break;
-        case Resource::METHOD_HEAD:
-            curl_setopt($ch, CURLOPT_HEAD, true);
-            break;
-        default:
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->method);
-            break;
+        //curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
+        
+        // Request method
+        switch ($this->method)
+        {
+            case Resource::GET:
+                curl_setopt($ch, CURLOPT_HTTPGET, true);
+                break;
+                
+            case Resource::POST:
+                curl_setopt($ch, CURLOPT_POST, true);
+                break;
+                
+            case Resource::PUT:
+                curl_setopt($ch, CURLOPT_PUT, true);
+                break;
+                
+            case Resource::HEAD:
+                curl_setopt($ch, CURLOPT_HEAD, true);
+                break;
+                
+            default:
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 
+                    $this->method);
+                break;
         }
         
-        /**
-         * headers
-         */
+        // Headers
+        
         // HTTP version
-        switch ($this->version) {
-        case '1.0':
-            // HTTP/1.0
-            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-            break;
-        case '1.1':
-            // HTTP/1.1
-            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-            break;
-        default:
-            // let curl decide
-            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
-            break;
+        switch ($this->version) 
+        {
+            case '1.0':
+                curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+                break;
+                
+            case '1.1':
+                curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+                break;
+                
+            default:
+                // let curl decide
+                curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
+                break;
+        }
+        
+        // http auth basic & digest
+        if ($this->http_auth) {
+            
+            $type = array(
+                self::BASIC  => CURLAUTH_BASIC,
+                self::DIGEST => CURLAUTH_DIGEST
+            );
+            
+            curl_setopt($ch, CURLOPT_HTTPAUTH, $type[$this->http_auth[0]]);
+            curl_setopt($ch, CURLOPT_USERPWD,  $this->http_auth[1]);
         }
         
         // set specialized headers and retain all others
-        foreach ($headers as $i => $header) {
-            $pos = strpos($header, ':');
-            $label = substr($header, 0, $pos);
-            $value = substr($header, $pos + 2);
-            switch ($label) {
-                case 'Cookie':
-                    curl_setopt($ch, CURLOPT_COOKIE, $value);
-                    unset($headers[$i]);
-                    break;
-                case 'User-Agent':
-                    curl_setopt($ch, CURLOPT_USERAGENT, $value);
-                    unset($headers[$i]);
-                    break;
-                case 'Referer':
-                    curl_setopt($ch, CURLOPT_REFERER, $value);
-                    unset($headers[$i]);
-                    break;
-            }
+        if (isset($this->headers['Cookie'])) {
+            curl_setopt($ch, CURLOPT_COOKIE, $this->headers['Cookie']);
+            unset($this->headers['Cookie']);
+        }
+        
+        if (isset($this->headers['User-Agent'])) {
+            curl_setopt($ch, CURLOPT_USERAGENT, $this->headers['User-Agent']);
+            unset($this->headers['User-Agent']);
+        }
+        
+        if (isset($this->headers['Referer'])) {
+            curl_setopt($ch, CURLOPT_REFERER, $this->headers['Referer']);
+            unset($this->headers['Referer']);
         }
         
         // all remaining headers
-        if ($headers) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        if ($this->headers) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headers);
         }
         
-        /**
-         * content
-         */
+        // Content
         
         // only send content if we're POST or PUT
-        $send_content = $this->method == Resource::METHOD_POST
-                     || $this->method == Resource::METHOD_PUT;
+        $send_content = $this->method == Resource::POST
+                     || $this->method == Resource::PUT;
         
-        if ($send_content && ! empty($content)) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+        if ($send_content && ! empty($this->content)) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->content);
         }
         
-        /**
-         * curl behaviors
-         */
+        // cUrl
+        
+        // todo cookiejar stream
+        
         // convert Unix newlines to CRLF newlines on transfers.
         curl_setopt($ch, CURLOPT_CRLF, true);
         
@@ -212,11 +228,10 @@ class CurlResource extends AbstractResource
             }
         }
         
-        /**
-         * secure transport behaviors
-         */
-        $is_secure = strtolower(substr($uri, 0, 5)) == 'https' ||
-                     strtolower(substr($uri, 0, 3)) == 'ssl';
+        // ssl
+        
+        $is_secure = strtolower(substr($this->uri, 0, 5)) == 'https' ||
+                     strtolower(substr($this->uri, 0, 3)) == 'ssl';
         
         if ($is_secure) {
             // property-name => curlopt-constant
@@ -239,5 +254,51 @@ class CurlResource extends AbstractResource
         }
         
         return $ch;
+    }
+    
+    protected function saveResponse(array $headers, $content)
+    {
+        
+        foreach ($headers as $header) {
+            
+            // not an HTTP header, must be a "real" header for the current
+            // response number.  split on the first colon.
+            $pos     = strpos($header, ':');
+            $is_http = strtoupper(substr($header, 0, 5)) == 'HTTP/';
+            
+            // look for an HTTP header to start a new response object.
+            if ($pos === false && $is_http) {
+                
+                $this->response = clone $this->response;
+                $this->response_stack->push($this->response);//todo check me
+                
+                // set the version, status code, and status text in the response
+                preg_match('/HTTP\/(.+?) ([0-9]+)(.*)/i', $header, $matches);
+                $this->response->setVersion($matches[1]);
+                $this->response->setStatusCode($matches[2]);
+                $this->response->setStatusText($matches[3]);
+                
+                // go to the next header line
+                continue;
+            }
+            
+            // the header label is before the colon
+            $label = substr($header, 0, $pos);
+            
+            // the header value is the part after the colon,
+            // less any leading spaces.
+            $value = ltrim(substr($header, $pos+1));
+            
+            // is this a set-cookie header?
+            if (strtolower($label) == 'set-cookie') {
+                
+                $this->response->cookies->setFromString($value);
+            } elseif ($label) {
+                // set the header, allow multiples
+                $this->response->headers->add($label, $value);
+            }
+        }
+        
+        $this->response->setContent($content);
     }
 }
