@@ -2,7 +2,7 @@
 
 namespace aura\http;
 
-class Exception_UnableToDecompressContent extends Exception
+class Exception_UnableToDecompressContent extends \Aura\Http\Exception
 {
     protected $content;
     

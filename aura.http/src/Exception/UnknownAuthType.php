@@ -13,4 +13,4 @@ namespace Aura\Http\Exception;
  * @package aura.http
  * 
  */
-class UnknownVersion extends \Aura\Http\Exception {}
+class UnknownAuthType extends \Aura\Http\Exception {}

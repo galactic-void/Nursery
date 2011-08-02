@@ -50,7 +50,7 @@ class SignedValue
             return $this->$key;
         }
         
-        throw new \LogicException("'{$key}' is protected or does not exist.");
+        throw new Exception("'{$key}' is protected or does not exist.");
     }
     
     /**
@@ -72,7 +72,7 @@ class SignedValue
             return;
         }
         
-        throw new \LogicException("'{$key}' is protected or does not exist.");
+        throw new Exception("'{$key}' is protected or does not exist.");
     }
     
     /**
@@ -123,7 +123,6 @@ class SignedValue
     public function sign($value, $expires = null)
     {
         // base64-value|time|expire|signature
-        // todo base64 err? | 64 all?
         $value = base64_encode($value);
         $time  = time();
         $value = $value . static::SEPARATOR . 

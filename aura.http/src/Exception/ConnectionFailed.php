@@ -1,13 +1,16 @@
 <?php
+/**
+ * 
+ * This file is part of the Aura project for PHP.
+ * 
+ * @license http://opensource.org/licenses/bsd-license.php BSD
+ * 
+ */
+namespace Aura\Http\Exception;
 
-namespace aura\http;
-
-class Exception_ConnectionFailed extends Exception
-{
-    public function __construct($error_num, $error_msg)
-    {
-        $message = "Connection failed: ({$error_num}) {$error_msg}";
-        
-        parent::__construct($message, $error_num);
-    }
-}
+/**
+ * 
+ * @package aura.http
+ * 
+ */
+class ConnectionFailed extends \Aura\Http\Exception{}

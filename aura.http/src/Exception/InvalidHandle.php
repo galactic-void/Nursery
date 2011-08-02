@@ -13,4 +13,4 @@ namespace Aura\Http\Exception;
  * @package aura.http
  * 
  */
-class UnknownVersion extends \Aura\Http\Exception {}
+class InvalidHandle extends \Aura\Http\Exception {}
