@@ -333,7 +333,7 @@ class Uri
      * 
      * @return void
      * 
-     * @throws \UnexpectedValueException 
+     * @throws \Aura\Http\Exception 
      * 
      */
     public function __set($key, $val)
@@ -344,7 +344,7 @@ class Uri
         );
         
         if (! in_array($key, $vaild)) {
-            throw new \UnexpectedValueException("'{$key}' is protected or does not exist.");
+            throw new Exception("'{$key}' is protected or does not exist.");
         }
         
         $this->$key = $val;
@@ -359,7 +359,7 @@ class Uri
      * 
      * @return mixed
      * 
-     * @throws \UnexpectedValueException 
+     * @throws \Aura\Http\Exception 
      * 
      */
     public function &__get($key)
@@ -370,7 +370,7 @@ class Uri
         );
         
         if (! in_array($key, $vaild)) {
-            throw new \UnexpectedValueException("'{$key}' is protected or does not exist.");
+            throw new Exception("'{$key}' is protected or does not exist.");
         }
         
         if ('query' == $key && null === $this->query) {

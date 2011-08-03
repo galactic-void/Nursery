@@ -326,12 +326,14 @@ class Request
     public function setCookieJar($file)
     {
         if ($file) {
-            $this->options->file = $file;
+            $this->options->cookiejar = $file;
         } else {
-            if (file_exists($file)) {
-                unlink($file);
+            if (isset($this->options->cookiejar) && 
+                file_exists($this->options->cookiejar)) {
+
+                unlink($this->options->cookiejar);
             }
-            unset($this->options->file);
+            unset($this->options->cookiejar);
         }
 
         return $this;
@@ -359,7 +361,7 @@ class Request
     public function setHttpAuth($handle, $passwd, $authtype = self::BASIC)
     {
         if (! $handle && ! $passwd) {
-            $this->options->http_auth = null;
+            unset($this->options->http_auth);
             return $this;
         }
         
@@ -431,8 +433,6 @@ class Request
             self::UNLOCK
         );
         
-        $method = strtoupper($method);
-        
         if (! in_array($method, $allowed)) {
             throw new Exception\UnknownMethod("Method '{$method}' is unknown");
         }
@@ -459,24 +459,6 @@ class Request
     
     /**
      * 
-     * Sets the body content.
-     * 
-     * If you pass an array, the prepare() method will automatically call
-     * http_build_query() on the array and set the content-type for you.
-     * 
-     * @param string|array $val The body content.
-     * 
-     * @return Aura\Http\Resource This object.
-     * 
-     */
-    public function setContent($val)
-    {
-        $this->content = $val;
-        return $this;
-    }
-    
-    /**
-     * 
      * Sets the content-type for the body content.
      * 
      * @param string $val The content-type, e.g. "text/plain".
@@ -490,6 +472,24 @@ class Request
         return $this;
     }
     
+    /**
+     * 
+     * Sets the body content.
+     * 
+     * If you pass an array, the prepare() method will automatically call
+     * http_build_query() on the array and set the content-type for you.
+     * 
+     * @param string|array|resource $val The body content.
+     * 
+     * @return Aura\Http\Resource This object.
+     * 
+     */
+    public function setContent($val)
+    {
+        $this->content = $val;
+        return $this;
+    }
+
     /**
      * 
      * Sets the HTTP protocol version for the request (1.0 or 1.1).
@@ -652,7 +652,7 @@ class Request
         if ($encoding && ! function_exists('gzinflate')) {
             throw new Exception('Zlib extension is not loaded.');
         } else if (!$encoding) {
-            unset($this->header['Accept-Encoding']);
+            unset($this->headers['Accept-Encoding']);
             return $this;
         }
         
@@ -694,7 +694,7 @@ class Request
      */
     public function setMaxRedirects($max)
     {
-        if ($max === null) {
+        if (false === $max || null === $max) {
             $this->options->max_redirects = $this->default_opts['max_redirects'];
         } else {
             $this->options->max_redirects = (int) $max;
@@ -713,8 +713,8 @@ class Request
      */
     public function setTimeout($time)
     {
-        if ($time === null) {
-            $this->options->timeout = $this->default_opts['timeout'];
+        if (false === $time || null === $time) {
+            $this->options->timeout = (float) $this->default_opts['timeout'];
         } else {
             $this->options->timeout = (float) $time;
         }

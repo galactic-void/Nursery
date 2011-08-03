@@ -1,0 +1,6 @@
+Stream adapter
+Allow a resource to be used with setContent
+Check memory usage of @/path/file.ext
+Unit tests
+Howto test the adapters?
+Cleanup cookies note

@@ -2,10 +2,13 @@
 
 namespace aura\utility;
 
-use aura\web\Context as WebContext;
+use Aura\Web\Context as WebContext;
+use Aura\Http\Uri    as Uri;
 
 // tmp 
-require_once '../../../aura.web/src/Context.php';
+require_once '/Volumes/PROJECTS/aura.web/src/Context.php';
+require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Uri.php';
+require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception.php';
 
 
 class UriTest extends \PHPUnit_Framework_TestCase
@@ -32,7 +35,7 @@ class UriTest extends \PHPUnit_Framework_TestCase
     {
         $uri = $this->newUri();
         
-        $this->setExpectedException('\UnexpectedValueException');
+        $this->setExpectedException('\Aura\Http\Exception');
         
         $uri->invalid = 'foo';
     }
@@ -53,7 +56,7 @@ class UriTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($query,        $uri->query);
         $this->assertSame('frag',        $uri->fragment);
         
-        $this->setExpectedException('\UnexpectedValueException');
+        $this->setExpectedException('\Aura\Http\Exception');
         
         $uri->invalid;
     }
