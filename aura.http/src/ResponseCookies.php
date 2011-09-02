@@ -45,7 +45,7 @@ class ResponseCookies implements \IteratorAggregate
     
     public function getIterator()
     {
-        return new ArrayIterator($this->list);
+        return new \ArrayIterator($this->list);
     }
     
     public function set($name, array $info = array())
@@ -101,6 +101,7 @@ class ResponseCookies implements \IteratorAggregate
         foreach ($list as $item) {
             $data    = explode('=', trim($item));
             $data[0] = strtolower($data[0]);
+            
             switch ($data[0])
             {
                 // string-literal values

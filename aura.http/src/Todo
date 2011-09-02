@@ -1,6 +1,8 @@
 Stream adapter
-Allow a resource to be used with setContent
 Check memory usage of @/path/file.ext
-Unit tests
+Finish the unit tests
 Howto test the adapters?
-Cleanup cookies note
+cookies note (multi users)
+ResponseCookies|Headers merge with Cookies|Headers?
+OAuth 2.0 - the current revision
+Test readme examples

@@ -22,10 +22,9 @@ class MockAdapter implements \Aura\Http\RequestAdapter
         self::$version = '';
     }
 
-    public function connect($url, $version)
+    public function connect($url)
     {
         self::$uri     = $url;
-        self::$version = $version;
     }
 
     public function setOptions(\ArrayObject $options)
@@ -33,9 +32,10 @@ class MockAdapter implements \Aura\Http\RequestAdapter
         self::$options = $options;
     }
 
-    public function exec($method, array $headers, $content)
+    public function exec($method, $version, array $headers, $content)
     {
         self::$method  = $method;
+        self::$version = $version;
         self::$headers = $headers;
         self::$content = $content;
     }

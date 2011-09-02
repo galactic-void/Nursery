@@ -1,8 +1,8 @@
 <?php
 
-namespace aura\http;
+namespace Aura\Http\Exception;
 
-class Exception_UnableToDecompressContent extends \Aura\Http\Exception
+class UnableToDecompressContent extends \Aura\Http\Exception
 {
     protected $content;
     

@@ -11,23 +11,7 @@ use Aura\Http\ResponseCookies;
 use Aura\Http\Uri;
 use Aura\Web\Context;
 
-// tmp
-require_once '/Volumes/PROJECTS/aura.web/src/Context.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Uri.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Request.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/RequestAdapter.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/RequestResponse.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/ResponseHeaders.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/ResponseCookies.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/tests/MockAdapter.php';
-
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception/InvalidHandle.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception/UnknownAuthType.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception/UnknownMethod.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception/UnknownVersion.php';
-
-error_reporting(-1);
+require_once 'MockAdapter.php';
 
 function function_exists($func)
 {
@@ -38,11 +22,21 @@ function function_exists($func)
 
 class RequestTest extends \PHPUnit_Framework_TestCase
 {
-//xxx shoud be excep on no uri
-    protected function newResource($opts = array())
+    protected function newResource($opts = array(), $seturi = true)
     {
         $adapter  = new Mock(new RequestResponse(new ResponseHeaders, new ResponseCookies));
-        return new Request(new Uri(new Context($GLOBALS), 'http://google.com'), $adapter, $opts);
+        $request  = new Request(new Uri(new Context($GLOBALS), 'http://google.com'), $adapter, $opts);
+
+        if ($seturi) {
+            $request->setUri('http://example.com');
+        }
+
+        return $request;
+    }
+
+    public function test__clone()
+    {
+        
     }
 
     public function testSetCookieJar()
@@ -440,5 +434,104 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('\Aura\Http\Request', $return);
     }
 
+    public function testSetHeaderReturnsRequest()
+    {
+        $req    = $this->newResource();
+        $return = $req->setHeader('referer', 'http://example.com');
 
+        $this->assertInstanceOf('\Aura\Http\Request', $return);
+    }
+
+    public function testSetHeaderSanitizesLabel()
+    {
+        $req    = $this->newResource();
+        $req->setHeader("key\r\n-=foo", 'value')->send();
+
+        $this->assertTrue(array_key_exists('Key-Foo', Mock::$headers));;
+    }
+
+    public function testSetHeaderDeleteHeaderWithNullOrFalseValue()
+    {
+        $req     = $this->newResource();
+        // false
+        $req->setHeader("key", 'value')->send();
+
+        $this->assertTrue(array_key_exists('Key', Mock::$headers));
+
+        $req->setHeader("key", false)->send();
+
+        $this->assertFalse(array_key_exists('Key', Mock::$headers));
+
+        // null
+        $req->setHeader("key", 'value')->send();
+
+        $this->assertTrue(array_key_exists('Key', Mock::$headers));
+
+        $req->setHeader("key", null)->send();
+
+        $this->assertFalse(array_key_exists('Key', Mock::$headers));
+    }
+
+    public function testSetHeaderReplaceValue()
+    {
+        $req     = $this->newResource();
+        
+        $req->setHeader("key", 'value')->send();
+
+        $this->assertSame('value', Mock::$headers['Key']);
+
+        $req->setHeader("key", 'value2')->send();
+
+        $this->assertSame('value2', Mock::$headers['Key']);
+    }
+
+    public function testSetHeaderMultiValue()
+    {
+        $req     = $this->newResource();
+        
+        $req->setHeader("key", 'value', false);
+        $req->setHeader("key", 'value2', false)->send();
+
+        $this->assertEquals(array(0 => 'value', 1 => 'value2'), Mock::$headers['Key']);
+    }
+
+    public function testSetHeaderSettingCookiesException()
+    {
+        $req    = $this->newResource();
+        $this->setExpectedException('\Aura\Http\Exception');
+        $req->setHeader("cookie", 'value');
+    }
+
+    public function testSetCookieReturnsRequest()
+    {
+        $req    = $this->newResource();
+        $return = $req->setCookie("cookie", 'value');
+
+        $this->assertInstanceOf('\Aura\Http\Request', $return);
+    }
+
+    public function testSetCookie()
+    {
+        $req    = $this->newResource();
+        $req->setCookie("cookie", array('value' => 'value'));
+        $req->setCookie("cookie\r\n-name", 'value')->send();
+        
+        $this->assertSame('cookie=value; cookie-name=value', Mock::$headers['Cookie']);
+    }
+
+    public function testSetRefererReturnsRequest()
+    {
+        $req    = $this->newResource();
+        $return = $req->setReferer('http://example.com');
+
+        $this->assertInstanceOf('\Aura\Http\Request', $return);
+    }
+
+    public function testSetReferer()
+    {
+        $req    = $this->newResource();
+        $req->setReferer('http://example.com')->send();
+
+        $this->assertSame('http://example.com', Mock::$headers['Referer']);
+    }
 }

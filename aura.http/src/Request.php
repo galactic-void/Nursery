@@ -82,6 +82,8 @@ class Request
      * @config bool ssl_verify_peer Whether or not to verify the peer SSL
      * certificate.
      * 
+     * @config string method The default HTTP method.
+     * 
      * @var array
      * 
      */
@@ -101,25 +103,27 @@ class Request
         'method'          => self::GET,
     );
     
-    
     /**
      *
-     * Whether or not to automatically set the Content-Length header.
-     * 
-     * @var bool 
-     */
-    protected $auto_set_length = true;
-    
-    /**
+     * The uri to request.
      * 
      * @var \Aura\Http\Uri
      * 
      */
     protected $uri;
+
+    /**
+     *
+     * Has a uri to request been set.
+     * 
+     * @var bool
+     * 
+     */
+    protected $uri_set = false;
     
     /**
      * 
-     * HTTP request method to use for the request.
+     * HTTP request method to use.
      * 
      * @var string
      *
@@ -128,7 +132,7 @@ class Request
     
     /**
      * 
-     * HTTP version to use for the request.
+     * HTTP version to use.
      * 
      * @var string
      *
@@ -137,7 +141,7 @@ class Request
     
     /**
      * 
-     * The headers to use for the request.
+     * The headers to use.
      * 
      * @var array
      *
@@ -146,7 +150,7 @@ class Request
     
     /**
      * 
-     * The cookies to use for the request.
+     * The cookies to use.
      * 
      * @var array
      *
@@ -155,8 +159,7 @@ class Request
     
     /**
      * 
-     * Request options to use for the request. i.e. max_redirects, 
-     * ssl_verify_peer, etc.
+     * Request options to use. i.e. max_redirects, ssl_verify_peer, etc.
      * 
      * @var \ArrayObject
      * 
@@ -200,6 +203,15 @@ class Request
      * 
      */
     protected $adapter;
+    
+    /**
+     * 
+     * Oauth authorization.
+     * 
+     * @var \Aura\Http\OAuth
+     * 
+     */
+    protected $oauth;
 
 
     /**
@@ -208,7 +220,7 @@ class Request
      * 
      * @param \Aura\Http\RequestAdapter $adapter
      * 
-     * @param array $opts Default options, the options survives cloning and reset.
+     * @param array $opts Default options, these options survive cloning and reset.
      * 
      */
     public function __construct(
@@ -251,7 +263,7 @@ class Request
     
     /**
      * 
-     * Reset using the constructor defaults.
+     * Reset to the constructor defaults.
      * 
      * @return Aura\Http\Resource
      * 
@@ -259,6 +271,7 @@ class Request
     public function reset()
     {
         $this->uri     = clone $this->uri;
+        $this->uri_set = false;
         $this->content = null;
         $this->headers = array();
         $this->cookies = array();
@@ -281,23 +294,61 @@ class Request
      */
     public function send($save_to = null)
     {
-        if (! $this->uri) {
-            throw new Exception('This request has no uri');
+        if (! $this->uri_set) {
+            throw new Exception('This request has no uri.');
         }
-        
+
+        $url = $this->uri->get(true);
+
+        // turn off encoding if we are saving the content to a file.
         if ($save_to) {
             $this->setEncoding(false);
         }
 
         $this->options->file = $save_to;
         
-        $this->adapter->connect($this->uri->get(true), $this->version);
-        
         $this->prepareContent();
+
+        if ($this->oauth) {
+            $params = array();
+
+            // include the GET query in the signature base string
+            if($this->uri->query) {
+                $params += $this->uri->query;
+            }
+
+            // only application/x-www-form-urlencoded content is included in
+            // the signature base string
+            if (is_array($this->content) && 
+                'application/x-www-form-urlencoded' == $this->content_type) {
+                
+                $params += $this->content;
+            }
+            
+            switch ($this->oauth->getAuthorizationMethod())
+            {
+                case OAuth::HTTP:
+                    $this->headers['Authorization'] = // todo http auth over write?
+                        $this->oauth->signRequest($url, $this->method, $params);
+                    break;
+
+                case OAuth::GET:
+                    $this->uri->query += 
+                        $this->oauth->signRequest($url, $this->method, $params);
+                    break;
+
+                case OAuth::POST:
+                     $this->content   += 
+                        $this->oauth->signRequest($url, $this->method, $params);
+                    break;
+            }
+        }
+        
+        $this->adapter->connect($url);
         $this->adapter->setOptions($this->options);
         
         // force the content-type header if needed
-        if ($this->content_type) {
+        if ($this->content_type) { 
             if ($this->charset) {
                 $this->content_type .= "; charset={$this->charset}";
             }
@@ -306,16 +357,22 @@ class Request
         
         // bake cookies
         if ($this->cookies) {
-            $this->headers['Cookie'] = implode('; ', $this->cookies);
+            $cookies = '';
+
+            foreach ($this->cookies as $name => $value) {
+                $cookies .= "{$name}={$value}; ";
+            }
+            $this->headers['Cookie'] = trim($cookies, '; ');
         }
         
-        return $this->adapter->exec($this->method, $this->headers, $this->content);
+        return $this->adapter->exec($this->method,  $this->version, 
+                                    $this->headers, $this->content);
     }
     
     /**
      *
      * Save the cookies to a file. If $file is false the cookie file 
-     * will be removed. Must be a full path. 
+     * will be deleted. Must be a full path. 
      *
      * @param string $file 
      *
@@ -377,6 +434,21 @@ class Request
         
         return $this;
     }
+
+    /**
+     * 
+     * Set OAuth authentication.
+     *
+     * @param Aura\Http\OAuth $oauth
+     *
+     * @return Aura\Http\Resource This object.
+     *
+     */
+    public function setOAuth(OAuth $oauth)
+    {
+        $this->oauth = $oauth;
+        return $this;
+    }
     
     /**
      * 
@@ -395,6 +467,8 @@ class Request
             $this->uri = clone $this->uri;
             $this->uri->set($spec);
         }
+
+        $this->uri_set = true;
         
         return $this;
     }
@@ -403,7 +477,7 @@ class Request
      * 
      * Sets the HTTP method for the request (GET, POST, etc).
      * 
-     * Recgonized methods are OPTIONS, GET, HEAD, POST, PUT, DELETE,
+     * Recognized methods are OPTIONS, GET, HEAD, POST, PUT, DELETE,
      * TRACE, and CONNECT, GET, POST, PUT, DELETE, TRACE, OPTIONS, COPY,
      * LOCK, MKCOL, MOVE, PROPFIND, PROPPATCH AND UNLOCK.
      * 
@@ -820,8 +894,28 @@ class Request
         switch (true)
         {
             case (is_array($this->content) && ($is_post || $is_put)):
-                // is a POST or PUT with a data array. don't do anything
-                // will be handled by the request adapter.
+                // is a POST or PUT with a data array. 
+                $has_files = function ($content) use (&$has_files) {
+                    
+                    foreach ($content as $key => $value) {
+
+                        if ((is_array($value) && $has_files($value)) ||
+                            '@' == $value[0]) {
+                            
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+
+                if ($has_files($this->content)) {
+                    $this->content_type = 'multipart/form-data';
+                } else {
+                    $this->content_type = 'application/x-www-form-urlencoded';
+                }
+
+                break;
 
             case (is_string($this->content)):
                 // don't do anything, honour as set by the user

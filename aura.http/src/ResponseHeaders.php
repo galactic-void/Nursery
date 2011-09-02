@@ -41,7 +41,7 @@ class ResponseHeaders implements \IteratorAggregate
     
     public function getIterator()
     {
-        return new ArrayIterator($this->list);
+        return new \ArrayIterator($this->list);
     }
     
     public function add($label, $value)

@@ -6,9 +6,17 @@ use Aura\Web\Context as WebContext;
 use Aura\Http\Uri    as Uri;
 
 // tmp 
-require_once '/Volumes/PROJECTS/aura.web/src/Context.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Uri.php';
-require_once '/Volumes/PROJECTS/_Github_Nursery/aura.http/src/Exception.php';
+$files = glob('{/Users/lee/Dropbox/Development/_Github_Nursery/aura.http/src/*.php,' .
+              '/Users/lee/Dropbox/Development/_Github_Nursery/aura.http/src/Exception/*.php,' . 
+              '/Users/lee/Dropbox/Development/_Github_Nursery/aura.http/src/RequestAdapter/*.php,' . 
+              '/Users/lee/Dropbox/Development/_Github_Nursery/aura.http/src/Signature/*.php,' . 
+              '/Users/lee/Dropbox/Development/_Github_Nursery/aura.http/src/Storage/*.php}' 
+              , GLOB_BRACE);
+
+foreach ($files as $file) {
+  //  echo $file."\n\n";
+    require_once $file;
+}
 
 
 class UriTest extends \PHPUnit_Framework_TestCase

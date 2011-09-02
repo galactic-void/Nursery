@@ -24,12 +24,10 @@ interface RequestAdapter
      * 
      * @param string $url
      * 
-     * @param string $version
-     * 
      * @throws Exception\ConnectionFailed
      * 
      */
-    public function connect($url, $version);
+    public function connect($url);
 
 
     /**
@@ -48,6 +46,8 @@ interface RequestAdapter
      * 
      * @param string $method
      * 
+     * @param string $version
+     * 
      * @param array $headers
      * 
      * @param string $content
@@ -59,5 +59,5 @@ interface RequestAdapter
      * @throws Exception\EmptyResponse
      * 
      */
-    public function exec($method, array $headers, $content);
+    public function exec($method, $version, array $headers, $content);
 }

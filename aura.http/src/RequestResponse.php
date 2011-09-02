@@ -11,7 +11,7 @@ namespace Aura\Http;
 
 /**
  * 
- * 
+ * The results of a request.
  * 
  * @package aura.http
  * 
@@ -137,6 +137,13 @@ class RequestResponse
     protected $version = '1.1';
     
 
+    /**
+     * 
+     * @param Aura\Http\ResponseHeaders $headers
+     * 
+     * @param Aura\Http\ResponseCookies $cookies
+     *
+     */
     public function __construct(
         ResponseHeaders $headers,
         ResponseCookies $cookies
@@ -243,19 +250,19 @@ class RequestResponse
         }
 
         if (isset($this->headers->{'Content-Encoding'})) {
-            $encoding = $this->headers->{'Content-Encoding'};
+            $encoding = $this->headers->{'Content-Encoding'}[0];// xxx
         } else {
             $encoding = false;
         }
 
         if ('gzip' == $encoding) {
-            $content = gzinflate(substr($this->content, 10));
+            $content = @gzinflate(substr($this->content, 10));
         } else if ('inflate' == $encoding) {
-            $content = gzinflate($this->content);
+            $content = @gzinflate($this->content);
         } else {
             return $this->content;
         }
-        
+
         if (false === $content) {
             throw new Exception\UnableToDecompressContent($this->content);
         }
@@ -330,7 +337,8 @@ class RequestResponse
     
     /**
      * 
-     * Sets the HTTP status text for the response.
+     * Sets the HTTP status text for the response. Set the status code before
+     * calling setStatusText.
      * 
      * @param string $text The status text.
      * 

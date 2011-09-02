@@ -76,7 +76,11 @@ class Curl implements \Aura\Http\RequestAdapter
     
     /**
      * 
-     * Throws an exception if the curl extension isn't loaded
+     * Throws an exception if the curl extension isn't loaded.
+     * 
+     * @param \Aura\Http\RequestResponse $response
+     * 
+     * @param array $curl_opts
      * 
      * @throws Aura\Http\Exception If Curl extension is not loaded.
      * 
@@ -100,12 +104,10 @@ class Curl implements \Aura\Http\RequestAdapter
      * 
      * @param string $url
      * 
-     * @param string $version
-     * 
      * @throws Exception\ConnectionFailed
      * 
      */
-    public function connect($url, $version)
+    public function connect($url)
     {
         $this->response_stack = new \SplStack();
         $this->ch             = curl_init($url);
@@ -116,25 +118,10 @@ class Curl implements \Aura\Http\RequestAdapter
                 curl_error($this->ch));
         }
         
-        switch ($version) 
-        {
-            case '1.0':
-                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-                break;
-                
-            case '1.1':
-                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-                break;
-                
-            default:
-                // let curl decide
-                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
-                break;
-        }
-        
         $this->is_secure = strtolower(substr($url, 0, 5)) == 'https' ||
                            strtolower(substr($url, 0, 3)) == 'ssl';
 
+        // set the curl options provided through the constructor.
         foreach ($this->curl_opts as $opt => $value) {
             curl_setopt($this->ch, $opt, $value);
         }
@@ -237,6 +224,8 @@ class Curl implements \Aura\Http\RequestAdapter
      * 
      * @param string $method
      * 
+     * @param string $version
+     * 
      * @param array $headers
      * 
      * @param string $content
@@ -248,20 +237,27 @@ class Curl implements \Aura\Http\RequestAdapter
      * @throws Exception\EmptyResponse
      * 
      */
-    public function exec($method, array $headers, $content)
+    public function exec($method, $version, array $headers, $content)
     {
-        $this->setMethod($method);
-    
-        $this->setHeaders($headers);
 
         // only send content if we're POST or PUT
         $send_content = $method == Request::POST
                      || $method == Request::PUT;
         
-        if ($send_content && ! empty($content)) {
+        if ($send_content) {//} && ! empty($content)) {
+            if (is_array($content) && 
+                false === strpos($headers['Content-Type'], 'multipart/form-data')) {
+                // content does not contain any files
+                $content = http_build_query($content);
+            }
+
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $content);
 
         }
+        
+
+        $this->setMethod($method);
+        $this->setHeaders($headers);
     
         $response = curl_exec($this->ch);
         
@@ -286,6 +282,32 @@ class Curl implements \Aura\Http\RequestAdapter
         return $this->response_stack;
     }
     
+    /**
+     * 
+     * Set the HTTP version.
+     *
+     * @param string $version
+     *
+     */
+    protected function setVersion($version)
+    {
+        switch ($version) 
+        {
+            case '1.0':
+                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+                break;
+                
+            case '1.1':
+                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+                break;
+                
+            default:
+                // let curl decide
+                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
+                break;
+        }
+    }
+
     /**
      * 
      * Set the HTTP request method.
@@ -346,7 +368,14 @@ class Curl implements \Aura\Http\RequestAdapter
         
         // all remaining headers
         if ($headers) {
-            curl_setopt($this->ch, CURLOPT_HTTPHEADER, $headers);
+            $prepared_headers = array();
+            foreach ($headers as $key => $set) {
+                settype($set, 'array');
+                foreach ($set as $val) {
+                    $prepared_headers[] = "{$key}: {$val}";//Solar_Mime::headerLine($key, $val);
+                }
+            }
+            curl_setopt($this->ch, CURLOPT_HTTPHEADER, $prepared_headers);
         }
     }
     
