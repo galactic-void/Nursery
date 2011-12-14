@@ -37,7 +37,7 @@ class SignedValue
      * 
      * Magic get to provide access to the hash_algo variable.
      * 
-     * @throws \LogicException
+     * @throws \Exception
      * 
      * @param string $key The property to retrieve: hash_algo & timeout.
      * 
