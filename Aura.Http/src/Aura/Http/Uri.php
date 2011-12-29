@@ -290,19 +290,15 @@ class Uri
      */
     protected $construct_uri;
     
-    protected $webcontext;
-    
     
 
     /**
      * 
-     * 
+     * @param string $uri
      * 
      */
-    public function __construct(\aura\web\Context $webcontext, $uri = null)
-    {
-        $this->webcontext = $webcontext;
-        
+    public function __construct($uri = null)
+    {   
         $this->set($uri);
         
         if ($uri) {
@@ -415,28 +411,36 @@ class Uri
      */
     public function set($uri = null)
     {
+        $server = function ($key, $default = null) {
+            if (isset($_SERVER[$key])) {
+                return $_SERVER[$key];
+            }
+
+            return $default;
+        };
+
         // build a default scheme (with '://' in it)
-        $scheme = $this->webcontext->isSsl() ? 'https://' : 'http://';
+        $isssl  = 'on' == $server('HTTPS') || 443 == $server('SERVER_PORT');
+        $scheme = $isssl ? 'https://' : 'http://';
         
         // get the current host, using a dummy host name if needed.
         // we need a host name so that parse_url() works properly.
         // we remove the dummy host name at the end of this method.
-        $host = $this->webcontext->getServer('HTTP_HOST', 'example.com');
+        $host = $server('HTTP_HOST', 'example.com');
         
         // right now, we assume we don't have to force any values.
         $forced = false;
         
         // forcibly set to the current uri?
         $uri = trim($uri);
+
         if (! $uri) {
             // we're forcing values
             $forced = true;
             
             // add the scheme and host
             $uri  = $scheme . $host;
-            
-            // todo
-            $uri .= $this->webcontext->getServer('REQUEST_URI');
+            $uri .= $server('REQUEST_URI');
         }
         
         // forcibly add the scheme and host?
@@ -474,7 +478,7 @@ class Uri
         $this->setQuery($elem['query']);
         
         // if we had to force values, remove dummy placeholders
-        if ($forced && ! $this->webcontext->getServer('HTTP_HOST')) {
+        if ($forced && ! $server('HTTP_HOST')) {
             $this->scheme = null;
             $this->host   = null;
         }
