@@ -70,7 +70,13 @@ class Curl implements \Aura\Http\RequestAdapter
      */
     protected $content = '';
     
-
+    /**
+     * 
+     * List of curl options.
+     * 
+     * @var array
+     * 
+     */
     protected $curl_opts;
 
     
@@ -80,21 +86,21 @@ class Curl implements \Aura\Http\RequestAdapter
      * 
      * @param \Aura\Http\RequestResponse $response
      * 
-     * @param array $curl_opts
+     * @param array $options Adapter specific options  
      * 
      * @throws Aura\Http\Exception If Curl extension is not loaded.
      * 
      */
     public function __construct(
         \Aura\Http\RequestResponse $response,
-        array $curl_opts = array()
+        array $options = array()
         )
     {
         if (! extension_loaded('curl')) {
             throw new Exception('Curl extension is not loaded.');
         }
         
-        $this->curl_opts = $curl_opts;
+        $this->curl_opts = $options;
         $this->response  = $response;
     }
     
@@ -129,7 +135,7 @@ class Curl implements \Aura\Http\RequestAdapter
     
     /**
      * 
-     * The request options.
+     * Set the options for cookie, auth, proxy, timeout, etc.
      * 
      * @param \ArrayObject $options
      * 
@@ -191,10 +197,10 @@ class Curl implements \Aura\Http\RequestAdapter
                 'ssl_passphrase'  => CURLOPT_SSLCERTPASSWD,
             );
             
-            // set other behaviors
+            // set other behaviours
             foreach ($var_opt as $var => $opt) {
                 // use this comparison so boolean false and integer zero
-                // values are honored
+                // values are honoured
                 if ($options->$var !== null) {
                     curl_setopt($this->ch, $opt, $options->$var);
                 }
@@ -372,7 +378,7 @@ class Curl implements \Aura\Http\RequestAdapter
             foreach ($headers as $key => $set) {
                 settype($set, 'array');
                 foreach ($set as $val) {
-                    $prepared_headers[] = "{$key}: {$val}";//Solar_Mime::headerLine($key, $val);
+                    $prepared_headers[] = "{$key}: {$val}";
                 }
             }
             curl_setopt($this->ch, CURLOPT_HTTPHEADER, $prepared_headers);

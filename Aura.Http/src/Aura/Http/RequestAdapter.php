@@ -20,6 +20,17 @@ interface RequestAdapter
 {
     /**
      * 
+     * @param \Aura\Http\RequestResponse $response
+     * 
+     * @param array $options Adapter specific options  
+     * 
+     */
+    public function __construct(
+         \Aura\Http\RequestResponse $response, 
+         array $options = array());
+
+    /**
+     * 
      * Initialize the connection.
      * 
      * @param string $url

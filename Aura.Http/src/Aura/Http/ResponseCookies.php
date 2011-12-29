@@ -17,8 +17,24 @@ namespace Aura\Http;
  */
 class ResponseCookies implements \IteratorAggregate
 {
+    /**
+     * 
+     * The list of all cookies.
+     * 
+     * @var array
+     * 
+     */
     protected $list = array();
-    
+
+    /**
+     * 
+     * Base values for a single cookie.
+     * 
+     * @todo Extract to a Cookie struct, and probably a CookieFactory.
+     * 
+     * @var array
+     * 
+     */
     protected $base = array(
         'value'    => null,
         'expire'   => null,
@@ -28,26 +44,65 @@ class ResponseCookies implements \IteratorAggregate
         'httponly' => true,
     );
 
+    /**
+     * 
+     * Reset the cookie list.
+     * 
+     */
     public function __clone()
     {
         $this->list = array();
     }
     
+    /**
+     * 
+     * Get a cookie.
+     * 
+     * @param string $key 
+     * 
+     * @return array
+     * 
+     */
     public function __get($key)
     {
         return $this->list[$key];
     }
     
+    /**
+     * 
+     * Does a cookie exist.
+     * 
+     * @param string $key 
+     * 
+     * @return bool
+     * 
+     */
     public function __isset($key)
     {
         return isset($this->list[$key]);
     }
     
+    /** 
+     * 
+     * Gets all cookies as an iterator.
+     * 
+     * @return array
+     * 
+     */
     public function getIterator()
     {
         return new \ArrayIterator($this->list);
     }
     
+    /**
+     * 
+     * Sets a single cookie by name.
+     * 
+     * @param string $name The cookie name.
+     * 
+     * @param array $info The cookie info.
+     * 
+     */
     public function set($name, array $info = array())
     {
         $info = array_merge($this->base, $info);
@@ -57,11 +112,28 @@ class ResponseCookies implements \IteratorAggregate
         $this->list[$name] = $info;
     }
     
+    /** 
+     * 
+     * Gets all cookies.
+     * 
+     * @return array
+     * 
+     */
     public function getAll()
     {
         return $this->list;
     }
     
+    /**
+     * 
+     * Sets all cookies at once.
+     * 
+     * @param array $cookies The array of all cookies where the key is the
+     * name and the value is the array of cookie info.
+     * 
+     * @return void
+     * 
+     */
     public function setAll(array $cookies = array())
     {
         $this->list = array();
@@ -96,26 +168,25 @@ class ResponseCookies implements \IteratorAggregate
         
         // get the name and value
         list($cookie['name'], $cookie['value']) = explode('=', array_shift($list));
-        $cookie['value'] = urldecode($cookie['value']);
+        $cookie['value']                        = urldecode($cookie['value']);
         
         foreach ($list as $item) {
             $data    = explode('=', trim($item));
             $data[0] = strtolower($data[0]);
             
-            switch ($data[0])
-            {
-                // string-literal values
-                case 'expires':
-                case 'path':
-                case 'domain':
-                    $cookie[$data[0]] = $data[1];
-                    break;
-                
-                // true/false values
-                case 'secure':
-                case 'httponly':
-                    $cookie[$data[0]] = true;
-                    break;
+            switch ($data[0]) {
+            // string-literal values
+            case 'expires':
+            case 'path':
+            case 'domain':
+                $cookie[$data[0]] = $data[1];
+                break;
+            
+            // true/false values
+            case 'secure':
+            case 'httponly':
+                $cookie[$data[0]] = true;
+                break;
             }
         }
         

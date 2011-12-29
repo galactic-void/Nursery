@@ -12,7 +12,9 @@ class MockAdapter implements \Aura\Http\RequestAdapter
     public static $content;
 
 
-    public function __construct()
+    public function __construct(
+         \Aura\Http\RequestResponse $response, 
+         array $options = array())
     {
         self::$options = array();
         self::$headers = array();

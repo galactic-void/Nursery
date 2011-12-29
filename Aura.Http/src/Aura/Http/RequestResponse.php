@@ -223,15 +223,15 @@ class RequestResponse
      * @return void
      * 
      */
-    public function setContent($content, $append = true, $saved_to_file = false)
+    public function setContent($content, $append = true, $save_to_file = false)
     {
-        if ($append) {
+        if ($append && ! $save_to_file) {
             $this->content .= $content;
         } else {
             $this->content  = $content;
         }
         
-        $this->is_saved_to_file = $saved_to_file;
+        $this->is_saved_to_file = $save_to_file;
     }
     
     /**
@@ -240,7 +240,7 @@ class RequestResponse
      * 
      * @return string|resource The body content of the response or a file resource.
      * 
-     * @throws aura\http\Exception\UnableToDecompressContent
+     * @throws Aura\Http\Exception\UnableToDecompressContent
      * 
      */
     public function getContent()

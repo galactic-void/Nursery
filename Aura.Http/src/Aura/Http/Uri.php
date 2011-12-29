@@ -119,7 +119,7 @@ namespace Aura\Http;
  * 
  * @author Paul M. Jones <pmjones@solarphp.com>
  * 
- * @todo put above into manual and simplify desc | tainted data warning
+ * @todo put above into manual and simplify desc 
  * 
  */
 class Uri
@@ -340,7 +340,7 @@ class Uri
         );
         
         if (! in_array($key, $vaild)) {
-            throw new Exception("'{$key}' is protected or does not exist.");
+            throw new Exception("'{$key}' does not exist.");
         }
         
         $this->$key = $val;

@@ -47,12 +47,6 @@ class Request
     const DIGEST     = 'DIGEST';
     
     /**
-     * Encoding constants
-     */
-    const GZIP       = 'GZIP';
-    const DEFLATE    = 'DEFLATE';
-    
-    /**
      * 
      * Default configuration values.
      * 
@@ -221,14 +215,13 @@ class Request
         array $opts = array())
     {
         $this->uri     = clone $uri;
-        $this->options = new \ArrayObject(array(), \ArrayObject::ARRAY_AS_PROPS);
         $this->adapter = $adapter;
         
         if ($opts) {
             $this->default_opts = array_merge($this->default_opts, $opts);
         }
         
-        $this->setDefaults();
+        $this->reset();
     }
     
     /**
@@ -618,7 +611,7 @@ class Request
     public function setReferer($spec)
     {
         if ($spec instanceof Uri) {
-            $spec = $spec->get();
+            $spec = $spec->get(true);
         }
         $this->headers['Referer'] = $spec;
         return $this;
@@ -681,7 +674,7 @@ class Request
     public function setProxy($spec, $port = null)
     {
         if ($spec instanceof Uri) {
-            $spec = $spec->get();
+            $spec = $spec->get(true);
         }
 
         $this->options->proxy = $spec;

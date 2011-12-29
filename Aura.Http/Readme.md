@@ -12,10 +12,9 @@
     use Aura\Http\ResponseHeaders;
     use Aura\Http\ResponseCookies;
     use Aura\Http\Uri;
-    use Aura\Web\Context;
 
     $adapter  = new Curl(new RequestResponse(new ResponseHeaders, new ResponseCookies)
-    $response = new Request(new Uri(new Context($GLOBALS)), $adapter);
+    $response = new Request(new Uri, $adapter);
 
 ## Making a Request
 Making a GET request to Github to list Auras repositories in JSON format:
@@ -53,7 +52,7 @@ In the example above the download is stored in memory. For larger files you will
                         ->setMethod(Request::GET)
                         ->send('/a/path');
 
-When you save a file to disk `RequestResponse->getContent()` returns a file resource.
+When you save a file to disk `RequestResponse->getContent()` will return a file resource.
 
 ## Uploading a File
 

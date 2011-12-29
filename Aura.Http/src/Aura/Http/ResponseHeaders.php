@@ -17,45 +17,122 @@ namespace Aura\Http;
  */
 class ResponseHeaders implements \IteratorAggregate
 {
+    /**
+     * 
+     * The list of all headers.
+     * 
+     * @var array
+     * 
+     */
     protected $list = array();
     
+    /**
+     * 
+     * Reset the list of headers.
+     * 
+     */
     public function __clone()
     {
         $this->list = array();
     }
     
+    /**
+     * 
+     * Get a header.
+     * 
+     * @param string $key 
+     * 
+     * @return mixed
+     * 
+     */
     public function __get($key)
     {
         return $this->list[$key];
     }
     
+    /**
+     * 
+     * Does a header exist.
+     * 
+     * @param string $key 
+     * 
+     * @return bool
+     * 
+     */
     public function __isset($key)
     {
         return isset($this->list[$key]);
     }
     
+    /**
+     * 
+     * Returns all the headers.
+     * 
+     * @return array
+     * 
+     */
     public function getAll()
     {
         return $this->list;
     }
     
+    /**
+     * 
+     * Returns all the headers as an iterator.
+     * 
+     * @return \ArrayIterator
+     * 
+     */
     public function getIterator()
     {
         return new \ArrayIterator($this->list);
     }
     
+    /**
+     * 
+     * Adds a header value to an existing header label; if there is more
+     * than one, it will append the new value.
+     * 
+     * @param string $label The header label.
+     * 
+     * @param string $value The header value.
+     * 
+     * @return void
+     * 
+     */
     public function add($label, $value)
     {
         $label = $this->sanitizeLabel($label);
         $this->list[$label][] = $value;
     }
     
+    /**
+     * 
+     * Sets a header value, overwriting previous values.
+     * 
+     * @param string $label The header label.
+     * 
+     * @param string $value The header value.
+     * 
+     * @return void
+     * 
+     */
     public function set($label, $value)
     {
         $label = $this->sanitizeLabel($label);
         $this->list[$label] = array($value);
     }
     
+    /**
+     * 
+     * Sets all the headers at once; replaces all previously existing headers.
+     * 
+     * @param array $headers An array of headers where the key is the header
+     * label, and the value is the header value (multiple values are allowed).
+     * 
+     * @return void
+     * 
+     */
     public function setAll(array $headers = array())
     {
         foreach ($headers as $label => $values) {

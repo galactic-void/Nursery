@@ -3,15 +3,12 @@
 namespace Aura\Http;
 
 use Aura\Http\Request;
-use Aura\Http\RequestAdapter;
 use Aura\Http\RequestAdapter\MockAdapter as Mock;
 use Aura\Http\RequestResponse;
 use Aura\Http\ResponseHeaders;
 use Aura\Http\ResponseCookies;
 use Aura\Http\Uri;
-use Aura\Web\Context;
 
-require_once 'MockRequest.php';
 require_once 'MockAdapter.php';
 
 function function_exists($func)
@@ -31,12 +28,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
                         )
                     );
         $request  = new Request(
-                        new Uri(
-                                new Context($GLOBALS), 
-                                'http://google.com'), 
-                            $adapter, 
-                            $opts
-                        );
+                        new Uri('http://google.com'), 
+                        $adapter, 
+                        $opts
+                    );
 
         if ($seturi) {
             $request->setUri('http://example.com');
@@ -47,12 +42,33 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
     public function test__clone()
     {
-        $req = $this->getMock('\Aura\Http\MockRequest', array('reset'));
+        $req = $this->getMock(
+                    '\Aura\Http\Request', 
+                    array('reset'),
+                    array(),
+                    '',
+                    false);
         
         $req->expects($this->once())
                  ->method('reset');
 
         $newreq = clone $req;
+    }
+
+    public function testSendNoUriException()
+    {
+        $this->setExpectedException('\Aura\Http\Exception');
+        $req = $this->newResource(array(), false);
+        $req->send();
+    }
+
+    public function testSendWithSaveToDisablesEncoding()
+    {
+        $req = $this->newResource();
+        $req->setEncoding(true);
+        $req->send('/a/path');
+
+        $this->assertFalse(isset(Mock::$headers['Accept-Encoding']));
     }
 
     public function testSetCookieJar()
@@ -74,7 +90,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         // check the file was created for the tests
         $this->assertTrue(file_exists(__DIR__ . '/_files/cookietest'));
 
-        // ready to test unsetting the cookie jar
+        // ready to test deleting the cookie jar
         $req->setCookieJar(false);
 
         $this->assertFalse(isset(Mock::$options->cookiejar));
@@ -150,7 +166,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
     public function testSetUriWithUri()
     {
-        $uri = new Uri(new Context($GLOBALS), 'http://example.com/path');
+        $uri = new Uri('http://example.com/path');
         $req = $this->newResource();
         $req->setUri($uri);
         $req->send();
@@ -588,5 +604,39 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $req->setReferer('http://example.com')->send();
 
         $this->assertSame('http://example.com', Mock::$headers['Referer']);
+    }
+
+    public function testSetRefererWithUri()
+    {
+        $uri = new Uri('http://example.com');
+        $req = $this->newResource();
+        $req->setReferer($uri)->send();
+
+        $this->assertSame('http://example.com', Mock::$headers['Referer']);
+    }
+
+    public function testSetProxyReturnsRequest()
+    {
+        $req    = $this->newResource();
+        $return = $req->setProxy('http://example.com');
+
+        $this->assertInstanceOf('\Aura\Http\Request', $return);
+    }
+
+    public function testSetProxy()
+    {
+        $req    = $this->newResource();
+        $req->setProxy('http://example.com')->send();
+
+        $this->assertSame('http://example.com', Mock::$options['proxy']);
+    }
+
+    public function testSetProxyWithUri()
+    {
+        $uri = new Uri('http://example.com');
+        $req = $this->newResource();
+        $req->setProxy($uri)->send();
+
+        $this->assertSame('http://example.com', Mock::$options['proxy']);
     }
 }
