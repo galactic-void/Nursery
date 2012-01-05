@@ -83,3 +83,5 @@ When you save a file to disk `RequestResponse->getContent()` will return a file 
 ## Reusing a Request object
  todo
  
+## Uri
+ todo

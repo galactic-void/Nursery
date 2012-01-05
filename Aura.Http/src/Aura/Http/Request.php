@@ -8,12 +8,13 @@
  */
 namespace Aura\Http;
 
+use Aura\Uri\Http as HttpUri;
 
 /**
  * 
  * HTTP Request library.
  * 
- * @package aura.http
+ * @package Aura.Http
  * 
  */
 class Request
@@ -81,7 +82,7 @@ class Request
      * @var array
      * 
      */
-    protected $default_opts = array(
+    protected $default_opts = [
         'charset'         => 'utf-8',
         'content_type'    => null,
         'max_redirects'   => 10,
@@ -95,25 +96,16 @@ class Request
         'ssl_passphrase'  => null,
         'ssl_verify_peer' => null,
         'method'          => self::GET,
-    );
+    ];
     
     /**
      *
-     * The uri to request.
+     * The URL to request.
      * 
-     * @var \Aura\Http\Uri
-     * 
-     */
-    protected $uri;
-
-    /**
-     *
-     * Has a uri to request been set.
-     * 
-     * @var bool
+     * @var string
      * 
      */
-    protected $uri_set = false;
+    protected $url;
     
     /**
      * 
@@ -140,7 +132,7 @@ class Request
      * @var array
      *
      */
-    protected $headers = array();
+    protected $headers = [];
     
     /**
      * 
@@ -149,7 +141,7 @@ class Request
      * @var array
      *
      */
-    protected $cookies = array();
+    protected $cookies = [];
     
     /**
      * 
@@ -201,27 +193,22 @@ class Request
 
     /**
      * 
-     * @param \Aura\Http\Uri $uri
-     * 
      * @param \Aura\Http\RequestAdapter $adapter
      * 
      * @param array $opts Default options, these options survive cloning and
      * reset().
      * 
      */
-    public function __construct(
-        Uri $uri, 
-        RequestAdapter $adapter,
-        array $opts = array())
+    public function __construct(RequestAdapter $adapter, array $opts = [])
     {
-        $this->uri     = clone $uri;
         $this->adapter = $adapter;
+        
+        // Use reset to setup the default options.
+        $this->reset();
         
         if ($opts) {
             $this->default_opts = array_merge($this->default_opts, $opts);
         }
-        
-        $this->reset();
     }
     
     /**
@@ -245,12 +232,11 @@ class Request
      */
     public function reset()
     {
-        $this->uri     = clone $this->uri;
-        $this->uri_set = false;
+        $this->url     = null;
         $this->content = null;
-        $this->headers = array();
-        $this->cookies = array();
-        $this->options = new \ArrayObject(array(), \ArrayObject::ARRAY_AS_PROPS);
+        $this->headers = [];
+        $this->cookies = [];
+        $this->options = new \ArrayObject([], \ArrayObject::ARRAY_AS_PROPS);
         
         $this->setDefaults();
         
@@ -269,8 +255,8 @@ class Request
      */
     public function send($save_to = null)
     {
-        if (! $this->uri_set) {
-            throw new Exception('This request has no uri.');
+        if (! $this->url) {
+            throw new Exception('This request has no URL.');
         }
 
         // turn off encoding if we are saving the content to a file.
@@ -281,10 +267,8 @@ class Request
         $this->options->file = $save_to;
         
         $this->prepareContent();
-
-        $url = $this->uri->get(true);
         
-        $this->adapter->connect($url);
+        $this->adapter->connect($this->url);
         $this->adapter->setOptions($this->options);
         
         // force the content-type header if needed
@@ -319,7 +303,6 @@ class Request
      * @return Aura\Http\Request This object.
      *
      */
-
     public function setCookieJar($file)
     {
         if ($file) {
@@ -362,7 +345,7 @@ class Request
             return $this;
         }
         
-        if(! in_array($authtype, array(self::BASIC, self::DIGEST))) {
+        if(! in_array($authtype, [self::BASIC, self::DIGEST])) {
             throw new Exception\UnknownAuthType("Unknown auth type '$authtype'");
 
         } else if (strpos($handle, ':') !== false) {
@@ -370,31 +353,33 @@ class Request
 
         }
         
-        $this->options->http_auth = array($authtype, "$handle:$passwd");
+        $this->options->http_auth = [$authtype, "$handle:$passwd"];
         
         return $this;
     }
     
     /**
      * 
-     * Sets the URI for the request.
+     * Sets the URL for the request.
      * 
-     * @param Aura\Http\Uri|string $spec The URI for the request.
+     * @param Aura\Uri\Http|string $spec The URL for the request.
      * 
      * @return Aura\Http\Request This object.
      * 
      */
-    public function setUri($spec)
+    public function setUrl($spec)
     {
-        if ($spec instanceof Uri) {
-            $this->uri = $spec;
+        if ($spec instanceof HttpUri) {
+            $this->url = $spec->get(true);
+
         } else {
-            $this->uri = clone $this->uri;
-            $this->uri->set($spec);
+            if (! $this->isFullUrl($spec)) {
+                throw new Exception\InvalidUrl();
+            }
+
+            $this->url = $spec;
         }
 
-        $this->uri_set = true;
-        
         return $this;
     }
         
@@ -415,7 +400,7 @@ class Request
      */
     public function setMethod($method)
     {
-        $allowed = array(
+        $allowed = [
             self::GET,
             self::POST,
             self::PUT,
@@ -430,7 +415,7 @@ class Request
             self::PROPFIND,
             self::PROPPATCH,
             self::UNLOCK
-        );
+        ];
         
         if (! in_array($method, $allowed)) {
             throw new Exception\UnknownMethod("Method '{$method}' is unknown");
@@ -539,12 +524,12 @@ class Request
         $low = strtolower($key);
         
         // use special methods when available
-        $special = array(
+        $special = [
             'content-type'  => 'setContentType',
             'http'          => 'setVersion',
             'referer'       => 'setReferer',
             'user-agent'    => 'setUserAgent',
-        );
+        ];
         
         if (! empty($special[$low])) {
             $method = $special[$low];
@@ -594,7 +579,7 @@ class Request
             $value = $spec['value'];
         }
         
-        $name = str_replace(array("\r", "\n"), '', $name);
+        $name = str_replace(["\r", "\n"], '', $name);
         $this->cookies[$name] = $value;
         return $this;
     }
@@ -603,16 +588,21 @@ class Request
      * 
      * Sets the referer for the request.
      * 
-     * @param Aura\Http\Uri|string $spec The referer URI.
+     * @param Aura\Uri\Http|string $spec The referer URL.
      * 
      * @return Aura\Http\Request This object.
      * 
      */
     public function setReferer($spec)
     {
-        if ($spec instanceof Uri) {
+        if ($spec instanceof HttpUri) {
             $spec = $spec->get(true);
         }
+
+        if (! $this->isFullUrl($spec)) {
+            throw new Exception\InvalidUrl();
+        }
+
         $this->headers['Referer'] = $spec;
         return $this;
     }
@@ -664,7 +654,7 @@ class Request
      * 
      * Send all requests through this proxy server.
      * 
-     * @param string|Aura\Http\Uri $spec The URI for the proxy server.
+     * @param string|Aura\Uri\Http $spec The URL for the proxy server.
      * 
      * @return Aura\Http\Request This object.
      * 
@@ -673,8 +663,12 @@ class Request
      */
     public function setProxy($spec, $port = null)
     {
-        if ($spec instanceof Uri) {
+        if ($spec instanceof HttpUri) {
             $spec = $spec->get(true);
+        }
+        
+        if ($spec && ! $this->isFullUrl($spec)) {
+            throw new Exception\InvalidUrl();
         }
 
         $this->options->proxy = $spec;
@@ -816,53 +810,53 @@ class Request
         $is_post = ($this->method == self::POST);
         $is_put  = ($this->method == self::PUT);
 
-        switch (true)
-        {
-            case (is_array($this->content) && ($is_post || $is_put)):
-                // is a POST or PUT with a data array. 
-                $has_files = function ($content) use (&$has_files) {
-                    
-                    foreach ($content as $key => $value) {
+        switch (true) {
 
-                        if ((is_array($value) && $has_files($value)) ||
-                            '@' == $value[0]) {
-                            
-                            return true;
-                        }
+        case (is_array($this->content) && ($is_post || $is_put)):
+            // is a POST or PUT with a data array. 
+            $has_files = function ($content) use (&$has_files) {
+                
+                foreach ($content as $key => $value) {
+
+                    if ((is_array($value) && $has_files($value)) ||
+                        '@' == $value[0]) {
+                        
+                        return true;
                     }
-
-                    return false;
-                };
-
-                if ($has_files($this->content)) {
-                    $this->content_type = 'multipart/form-data';
-                } else {
-                    $this->content_type = 'application/x-www-form-urlencoded';
                 }
 
-                break;
+                return false;
+            };
 
-            case (is_string($this->content)):
-                // don't do anything, honour as set by the user
-                break;
+            if ($has_files($this->content)) {
+                $this->content_type = 'multipart/form-data';
+            } else {
+                $this->content_type = 'application/x-www-form-urlencoded';
+            }
 
-            case (is_array($this->content) && $is_get):
-                // is a GET with a data array.
-                // merge the content array to the cloned uri query params.
-                $this->uri->query = array_merge(
-                    $this->uri->query,
-                    $this->content
-                );
-                
-                // now clear out the content
-                $this->content      = null;
-                $this->content_type = null;
-                break;
+            break;
 
-            default:
-                // no recognizable content
-                $this->content      = null;
-                $this->content_type = null;
+        case (is_string($this->content)):
+            // don't do anything, honour as set by the user
+            break;
+
+        case (is_array($this->content) && $is_get):
+            // is a GET with a data array.
+            // merge the content array with the query.
+            $url          = parse_url($this->url);
+            $query        = isset($url['query']) ? $url['query'] : array();
+            $url['query'] = http_build_query($query + $this->content);
+            $this->url    = $this->buildUrl($url);
+
+            // now clear out the content
+            $this->content      = null;
+            $this->content_type = null;
+            break;
+
+        default:
+            // no recognizable content
+            $this->content      = null;
+            $this->content_type = null;
         }
     }
 
@@ -882,7 +876,7 @@ class Request
     protected function sanitizeLabel($label)
     {
         $label = preg_replace('/[^a-zA-Z0-9_-]/', '', $label);
-        $label = ucwords(strtolower(str_replace(array('-', '_'), ' ', $label)));
+        $label = ucwords(strtolower(str_replace(['-', '_'], ' ', $label)));
         $label = str_replace(' ', '-', $label);
         return $label;
     }
@@ -909,5 +903,47 @@ class Request
         $this->setSslLocalCert($this->default_opts['ssl_local_cert']);
         $this->setSslPassphrase($this->default_opts['ssl_passphrase']);
         $this->setSslVerifyPeer($this->default_opts['ssl_verify_peer']);
+    }
+
+    /**
+     *
+     * Build a URL from an array
+     * 
+     * @param array $url
+     *
+     * @return string
+     * 
+     * @see \parse_url()
+     *
+     */
+    protected function buildUrl(array $url)
+    {
+        $return  = isset($url['scheme'])   ? $url['scheme'] . '://' : ''; 
+        $return .= isset($url['host'])     ? $url['host']           : ''; 
+        $return .= isset($url['port'])     ? ':' . $url['port']     : ''; 
+        $user    = isset($url['user'])     ? $url['user']           : ''; 
+        $pass    = isset($url['pass'])     ? $url['pass']           : ''; 
+        $return .= ($user || $pass)        ? "$user:$pass@"         : ''; 
+        $return .= isset($url['path'])     ? $url['path']           : ''; 
+        $return .= isset($url['query'])    ? '?' . $url['query']    : ''; 
+        $return .= isset($url['fragment']) ? '#' . $url['fragment'] : '';
+
+        return $return;
+    }
+
+    /**
+     * 
+     * Check if the URL has a scheme and host.
+     *
+     * @param string $spec 
+     *
+     * @return boolean
+     *
+     */
+    protected function isFullUrl($spec)
+    {
+        $url = parse_url($spec);
+
+        return ! (empty($url['scheme']) && empty($url['host']));
     }
 }
