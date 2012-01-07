@@ -2,6 +2,4 @@ Stream adapter
 Check memory usage of @/path/file.ext
 ResponseCookies|Headers merge with Cookies|Headers?
 OAuth integration?
-Test readme examples
-What happens with timeout
-Save to file - need file name cant be dir
+break the prepareContent method?

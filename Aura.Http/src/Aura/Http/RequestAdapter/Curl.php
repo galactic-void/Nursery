@@ -54,11 +54,18 @@ class Curl implements \Aura\Http\RequestAdapter
      * 
      * File resource.
      * 
-     * @var resource|string
+     * @var resource
      * 
      */
     protected $file_handle = null;
     
+    /**
+     * 
+     * Save the content to this file.
+     * 
+     * @var string
+     * 
+     */
     protected $file;
 
     /**
@@ -159,7 +166,7 @@ class Curl implements \Aura\Http\RequestAdapter
         curl_setopt($this->ch, CURLOPT_FOLLOWLOCATION, true);
         
         // http basic or digest auth
-        if (!empty($options->http_auth)) {
+        if (! empty($options->http_auth)) {
             $auth_types = array(
                 Request::BASIC  => CURLAUTH_BASIC,
                 Request::DIGEST => CURLAUTH_DIGEST
@@ -217,8 +224,7 @@ class Curl implements \Aura\Http\RequestAdapter
         curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
         
         if ($options->file) {
-            $this->file        = $options->file;
-            $this->file_handle = fopen($options->file, 'w'); // todo needs to bee file
+            $this->file = $options->file;
         }
     
         curl_setopt($this->ch, CURLOPT_WRITEFUNCTION,  array($this, 'saveContent'));
@@ -259,7 +265,7 @@ class Curl implements \Aura\Http\RequestAdapter
                 // content does not contain any files
                 $content = http_build_query($content);
             }
-            
+
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $content);
 
         }
@@ -270,8 +276,14 @@ class Curl implements \Aura\Http\RequestAdapter
         
         if (null === $response) {
             throw new Exception\ConnectionFailed(
-                'Connection failed: ('. curl_errno($this->ch) . ' ) ' .
+                'Connection failed: ('. curl_errno($this->ch) . ') ' .
                 curl_error($this->ch));
+        }
+        
+        if ($this->response_stack->isEmpty()) {
+            $msg = 'The server did not return a response. ('.
+                     curl_errno($this->ch) . ') ' .  curl_error($this->ch);
+            throw new Aura\Http\Exception\EmptyResponse($msg);
         }
         
         curl_close($this->ch);
@@ -281,10 +293,6 @@ class Curl implements \Aura\Http\RequestAdapter
         }
         
         $this->ch = $this->file_handle = null;
-        
-        if ($this->response_stack->isEmpty()) {
-            throw new Exception\EmptyResponse('The server did not return a response.');
-        }
         
         return $this->response_stack;
     }
@@ -397,19 +405,19 @@ class Curl implements \Aura\Http\RequestAdapter
      */
     protected function saveContent($ch, $content)
     {
-        if($this->file_handle) {
+        if($this->file) {
             
             $is_resource = is_resource($this->file_handle);
             
-            // file_handle is not a resource and is not empty try and extract
+            // file_handle is not a resource extract
             // a filename from the headers else generate a name then
-            // open a file resource.
+            // open a the file.
             if(! $is_resource) {
                 $filename = 'content.' . microtime() . '.out';
                         
-                if (isset($this->response->header->{'Content-Disposition'})) {
+                if (isset($this->response->headers->{'Content-Disposition'})) {
                     
-                    $filename = $this->response->header->{'Content-Disposition'};
+                    $filename = $this->response->headers->{'Content-Disposition'};
                     preg_match('/filename=[\'|"]([^\'"]*)/', $filename, $m);
                     
                     if (! empty($m[1])) {
@@ -417,7 +425,7 @@ class Curl implements \Aura\Http\RequestAdapter
                     }
                 }
                 
-                $filename          = $this->file_handle . 
+                $filename          = $this->file . 
                                      DIRECTORY_SEPARATOR . $filename;
                 $this->file_handle = fopen($filename, 'w');
             }

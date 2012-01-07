@@ -816,7 +816,8 @@ class Request
                 return false;
             };
 
-            // flatten a multidimensional array
+            // flatten a multidimensional array - [foo => [1,2]] becomes
+            // ['foo[0]' => 1, 'foo[1]' => 2]
             $flatten_content = function ($array, $return = [], $prefix = '')
                                     use (&$flatten_content)
             {
