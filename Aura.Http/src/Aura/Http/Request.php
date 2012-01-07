@@ -308,6 +308,7 @@ class Request
         if ($file) {
             $this->options->cookiejar = $file;
         } else {
+            // don't save cookies and remove the cookies file
             if (isset($this->options->cookiejar) && 
                 file_exists($this->options->cookiejar)) {
 
@@ -362,23 +363,18 @@ class Request
      * 
      * Sets the URL for the request.
      * 
-     * @param Aura\Uri\Http|string $spec The URL for the request.
+     * @param string $spec The URL for the request.
      * 
      * @return Aura\Http\Request This object.
      * 
      */
     public function setUrl($spec)
     {
-        if ($spec instanceof HttpUri) {
-            $this->url = $spec->get(true);
-
-        } else {
-            if (! $this->isFullUrl($spec)) {
-                throw new Exception\InvalidUrl();
-            }
-
-            $this->url = $spec;
+        if (! $this->isFullUrl($spec)) {
+            throw new Exception\FullUrlExpected();
         }
+
+        $this->url = $spec;
 
         return $this;
     }
@@ -588,19 +584,15 @@ class Request
      * 
      * Sets the referer for the request.
      * 
-     * @param Aura\Uri\Http|string $spec The referer URL.
+     * @param string $spec The referer URL.
      * 
      * @return Aura\Http\Request This object.
      * 
      */
     public function setReferer($spec)
     {
-        if ($spec instanceof HttpUri) {
-            $spec = $spec->get(true);
-        }
-
         if (! $this->isFullUrl($spec)) {
-            throw new Exception\InvalidUrl();
+            throw new Exception\FullUrlExpected();
         }
 
         $this->headers['Referer'] = $spec;
@@ -654,7 +646,7 @@ class Request
      * 
      * Send all requests through this proxy server.
      * 
-     * @param string|Aura\Uri\Http $spec The URL for the proxy server.
+     * @param string $spec The URL for the proxy server.
      * 
      * @return Aura\Http\Request This object.
      * 
@@ -663,12 +655,8 @@ class Request
      */
     public function setProxy($spec, $port = null)
     {
-        if ($spec instanceof HttpUri) {
-            $spec = $spec->get(true);
-        }
-        
         if ($spec && ! $this->isFullUrl($spec)) {
-            throw new Exception\InvalidUrl();
+            throw new Exception\FullUrlExpected();
         }
 
         $this->options->proxy = $spec;

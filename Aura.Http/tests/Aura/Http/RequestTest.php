@@ -140,7 +140,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('\Aura\Http\Request', $return);
     }
 
-    public function testSetUriWithString()
+    public function testSetUrlWithString()
     {
         $req = $this->newRequest();
         $req->setUrl('http://example.com');
@@ -149,25 +149,19 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('http://example.com', Mock::$uri);
     }
 
-    public function testSetUriWithUri()
-    {
-        $this->markTestIncomplete();
-        return;
-        
-        $uri = new Uri('http://example.com/path');
-        $req = $this->newRequest();
-        $req->setUrl($uri);
-        $req->send();
-
-        $this->assertSame('http://example.com/path', Mock::$uri);
-    }
-
-    public function testSetUriReturnsRequest()
+    public function testSetUrlReturnsRequest()
     {
         $req    = $this->newRequest();
         $return = $req->setUrl('http://example.com');
 
         $this->assertInstanceOf('\Aura\Http\Request', $return);
+    }
+
+    public function testSetUrlWithoutFullUrlException()
+    {
+        $req    = $this->newRequest();
+        $this->setExpectedException('\Aura\Http\Exception\FullUrlExpected');
+        $req->setUrl('example.com')->send();
     }
 
     public function testSetMethod()
@@ -275,7 +269,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
     public function testSetContentAsArrayByPost()
     {
-        $req = $this->newRequest();
+        $req  = $this->newRequest();
         $data = array('var' => '123', 'var2' => 'abc');
         $req->setContent($data)
             ->setContentType('text/text')
@@ -594,16 +588,11 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('http://example.com', Mock::$headers['Referer']);
     }
 
-    public function testSetRefererWithUri()
+    public function testSetRefererWithoutFullUrlException()
     {
-        $this->markTestIncomplete();
-        return;
-        
-        $uri = new Uri('http://example.com');
-        $req = $this->newRequest();
-        $req->setReferer($uri)->send();
-
-        $this->assertSame('http://example.com', Mock::$headers['Referer']);
+        $req    = $this->newRequest();
+        $this->setExpectedException('\Aura\Http\Exception\FullUrlExpected');
+        $req->setReferer('example.com')->send();
     }
 
     public function testSetProxyReturnsRequest()
@@ -622,15 +611,10 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('http://example.com', Mock::$options['proxy']);
     }
 
-    public function testSetProxyWithUri()
+    public function testSetProxyWithoutFullUrlException()
     {
-        $this->markTestIncomplete();
-        return;
-
-        $uri = new Uri('http://example.com');
-        $req = $this->newRequest();
-        $req->setProxy($uri)->send();
-
-        $this->assertSame('http://example.com', Mock::$options['proxy']);
+        $req    = $this->newRequest();
+        $this->setExpectedException('\Aura\Http\Exception\FullUrlExpected');
+        $req->setProxy('example.com')->send();
     }
 }

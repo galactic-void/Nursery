@@ -2,6 +2,8 @@ Stream adapter
 Check memory usage of @/path/file.ext
 cookies - note in readme: each user needs there own cookie file
 ResponseCookies|Headers merge with Cookies|Headers?
-OAuth integration
+OAuth integration?
 Test readme examples
-Should Uri be in its own package
+What happens with timeout
+Save to file - need file name cant be dir
+multidimensional array and curl upload (causes array to string error)

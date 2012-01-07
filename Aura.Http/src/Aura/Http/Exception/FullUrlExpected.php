@@ -13,11 +13,11 @@ namespace Aura\Http\Exception;
  * @package Aura.Http
  * 
  */
-class InvalidUrl extends \Aura\Http\Exception
+class FullUrlExpected extends \Aura\Http\Exception
 {
     public function __construct()
     {
-        $msg = 'A full URL is required the scheme and/or host name is missing.';
+        $msg = 'A full URL is required. The scheme and/or host name is missing.';
         parent::__construct($msg);
     }
 }

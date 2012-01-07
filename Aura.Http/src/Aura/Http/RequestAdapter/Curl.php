@@ -165,7 +165,8 @@ class Curl implements \Aura\Http\RequestAdapter
                 Request::DIGEST => CURLAUTH_DIGEST
             );
 
-            curl_setopt($this->ch, CURLOPT_HTTPAUTH, $options->http_auth[0]);
+            $auth_type = $auth_types[$options->http_auth[0]];
+            curl_setopt($this->ch, CURLOPT_HTTPAUTH, $auth_type);
             curl_setopt($this->ch, CURLOPT_USERPWD,  $options->http_auth[1]);
         }
 
@@ -217,7 +218,7 @@ class Curl implements \Aura\Http\RequestAdapter
         
         if ($options->file) {
             $this->file        = $options->file;
-            $this->file_handle = fopen($options->file, 'w'); // todo errors | is dir
+            $this->file_handle = fopen($options->file, 'w'); // todo needs to bee file
         }
     
         curl_setopt($this->ch, CURLOPT_WRITEFUNCTION,  array($this, 'saveContent'));
@@ -245,24 +246,25 @@ class Curl implements \Aura\Http\RequestAdapter
      */
     public function exec($method, $version, array $headers, $content)
     {
+        $this->setMethod($method);
+        $this->setVersion($version);
 
         // only send content if we're POST or PUT
         $send_content = $method == Request::POST
                      || $method == Request::PUT;
         
-        if ($send_content) {//} && ! empty($content)) {
+        if ($send_content) {
             if (is_array($content) && 
                 false === strpos($headers['Content-Type'], 'multipart/form-data')) {
                 // content does not contain any files
                 $content = http_build_query($content);
             }
 
+            // todo this can not handle a multidimensional array
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $content);
 
         }
         
-
-        $this->setMethod($method);
         $this->setHeaders($headers);
     
         $response = curl_exec($this->ch);
@@ -297,20 +299,20 @@ class Curl implements \Aura\Http\RequestAdapter
      */
     protected function setVersion($version)
     {
-        switch ($version) 
-        {
-            case '1.0':
-                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-                break;
-                
-            case '1.1':
-                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-                break;
-                
-            default:
-                // let curl decide
-                curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
-                break;
+        switch ($version) {
+
+        case '1.0':
+            curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+            break;
+            
+        case '1.1':
+            curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+            break;
+            
+        default:
+            // let curl decide
+            curl_setopt($this->ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
+            break;
         }
     }
 
@@ -323,27 +325,27 @@ class Curl implements \Aura\Http\RequestAdapter
      */
     protected function setMethod($method)
     {
-        switch ($method)
-        {
-            case 'GET':
-                curl_setopt($this->ch, CURLOPT_HTTPGET, true);
-                break;
-                
-            case Request::POST:
-                curl_setopt($this->ch, CURLOPT_POST, true);
-                break;
-                
-            case 'PUT':
-                curl_setopt($this->ch, CURLOPT_PUT, true);
-                break;
-                
-            case 'HEAD':
-                curl_setopt($this->ch, CURLOPT_HEAD, true);
-                break;
-                
-            default:
-                curl_setopt($this->ch, CURLOPT_CUSTOMREQUEST, $method);
-                break;
+        switch ($method) {
+
+        case 'GET':
+            curl_setopt($this->ch, CURLOPT_HTTPGET, true);
+            break;
+            
+        case Request::POST:
+            curl_setopt($this->ch, CURLOPT_POST, true);
+            break;
+            
+        case 'PUT':
+            curl_setopt($this->ch, CURLOPT_PUT, true);
+            break;
+            
+        case 'HEAD':
+            curl_setopt($this->ch, CURLOPT_HEAD, true);
+            break;
+            
+        default:
+            curl_setopt($this->ch, CURLOPT_CUSTOMREQUEST, $method);
+            break;
         }
     }
     
