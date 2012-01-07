@@ -13,10 +13,10 @@ namespace Aura\Http;
  * 
  * HTTP Request library.
  * 
- * @package aura.http
+ * @package Aura.Http
  * 
  */
-interface RequestAdapter
+interface AbstractRequest
 {
     /**
      * 

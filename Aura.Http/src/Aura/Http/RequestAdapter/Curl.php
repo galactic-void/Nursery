@@ -7,16 +7,15 @@
  * 
  */
 namespace Aura\Http\RequestAdapter;
-use Aura\Http\Request as Request;
 
 /**
  * 
  * Curl request adapter for the Aura Request library.
  * 
- * @package aura.http
+ * @package Aura.Http
  * 
  */
-class Curl implements \Aura\Http\RequestAdapter
+class Curl implements \Aura\Http\AbstractRequest
 {
     /**
      * 

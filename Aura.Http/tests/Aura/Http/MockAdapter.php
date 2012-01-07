@@ -2,7 +2,7 @@
 
 namespace Aura\Http\RequestAdapter;
 
-class MockAdapter implements \Aura\Http\RequestAdapter
+class MockAdapter implements \Aura\Http\AbstractRequest
 {
     public static $options;
     public static $headers;

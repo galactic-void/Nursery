@@ -38,6 +38,7 @@ Listing the repositories as an array:
 
 ## Exceptions
 Exceptions thrown by Request:
+
 Exceptions thrown by RequestResponse:
 
  

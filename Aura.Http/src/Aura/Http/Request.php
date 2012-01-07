@@ -185,7 +185,7 @@ class Request
      * 
      * Request adapter to use.
      * 
-     * @var \Aura\Http\RequestAdapter
+     * @var \Aura\Http\AbstractRequest
      * 
      */
     protected $adapter;
@@ -193,13 +193,13 @@ class Request
 
     /**
      * 
-     * @param \Aura\Http\RequestAdapter $adapter
+     * @param \Aura\Http\AbstractRequest $adapter
      * 
      * @param array $opts Default options, these options survive cloning and
      * reset().
      * 
      */
-    public function __construct(RequestAdapter $adapter, array $opts = [])
+    public function __construct(AbstractRequest $adapter, array $opts = [])
     {
         $this->adapter = $adapter;
         
@@ -291,6 +291,20 @@ class Request
         
         return $this->adapter->exec($this->method,  $this->version, 
                                     $this->headers, $this->content);
+    }
+
+    /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    public function get($url)
+    {
+        $this->setMethod(self::GET);
+        return $this->send($url);
     }
     
     /**
