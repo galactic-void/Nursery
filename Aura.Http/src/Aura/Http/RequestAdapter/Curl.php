@@ -259,8 +259,7 @@ class Curl implements \Aura\Http\RequestAdapter
                 // content does not contain any files
                 $content = http_build_query($content);
             }
-
-            // todo this can not handle a multidimensional array
+            
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $content);
 
         }

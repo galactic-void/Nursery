@@ -816,7 +816,25 @@ class Request
                 return false;
             };
 
+            // flatten a multidimensional array
+            $flatten_content = function ($array, $return = [], $prefix = '')
+                                    use (&$flatten_content)
+            {
+                foreach ($array as $key => $value) {
+                    if (is_array($value)) {
+                        $_prefix = $prefix ? $prefix . '[' . $key . ']' : $key;
+                        $return  = $flatten_content($value, $return, $_prefix); 
+                    } else {
+                        $_key = $prefix ? $prefix . '[' . $key . ']' : $key;
+                        $return[$_key] = $value;
+                    }
+                }
+
+                return $return;
+            };
+
             if ($has_files($this->content)) {
+                $this->content      = $flatten_content($this->content);
                 $this->content_type = 'multipart/form-data';
             } else {
                 $this->content_type = 'application/x-www-form-urlencoded';
