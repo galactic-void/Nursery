@@ -12,10 +12,10 @@ namespace Aura\Http;
  * 
  * Collection of non-cookie HTTP headers.
  * 
- * @package aura.http
+ * @package Aura.Http
  * 
  */
-class ResponseHeaders implements \IteratorAggregate
+class ResponseHeaders implements \IteratorAggregate, \Countable
 {
     /**
      * 
@@ -66,6 +66,18 @@ class ResponseHeaders implements \IteratorAggregate
     
     /**
      * 
+     * Count the number of headers.
+     * 
+     * @return integer
+     * 
+     */
+    public function count()
+    {
+        return count($this->list, COUNT_RECURSIVE);
+    }
+    
+    /**
+     * 
      * Returns all the headers.
      * 
      * @return array
@@ -102,8 +114,13 @@ class ResponseHeaders implements \IteratorAggregate
      */
     public function add($label, $value)
     {
-        $label = $this->sanitizeLabel($label);
-        $this->list[$label][] = $value;
+        if ($name instanceof Header) {
+            $header = $name;
+        } else {
+            $header = $this->factory->newInstance($label, $value);
+        }
+
+        $this->list[$header->getName()][] = $header;
     }
     
     /**
@@ -119,8 +136,13 @@ class ResponseHeaders implements \IteratorAggregate
      */
     public function set($label, $value)
     {
-        $label = $this->sanitizeLabel($label);
-        $this->list[$label] = array($value);
+        if ($name instanceof Header) {
+            $header = $name;
+        } else {
+            $header = $this->factory->newInstance($label, $value);
+        }
+
+        $this->list[$header->getName()] = array($header);
     }
     
     /**
@@ -144,22 +166,17 @@ class ResponseHeaders implements \IteratorAggregate
     
     /**
      * 
-     * Sanitizes header labels by removing all characters besides [a-zA-z0-9_-].
+     * Sends all the headers using `header()`.
      * 
-     * Underscores are converted to dashes, and word case is normalized.
-     * 
-     * Converts "foo \r bar_ baz-dib \n 9" to "Foobar-Baz-Dib9".
-     * 
-     * @param string $label The header label to sanitize.
-     * 
-     * @return string The sanitized header label.
+     * @return void
      * 
      */
-    protected function sanitizeLabel($label)
+    public function send()
     {
-        $label = preg_replace('/[^a-zA-Z0-9_-]/', '', $label);
-        $label = ucwords(strtolower(str_replace(array('-', '_'), ' ', $label)));
-        $label = str_replace(' ', '-', $label);
-        return $label;
+        foreach ($this->list as $values) {
+            foreach ($values as $header) {
+                header("$header->getLabel(): $header->getValue()");
+            }
+        }
     }
 }
