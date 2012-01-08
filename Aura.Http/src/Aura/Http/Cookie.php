@@ -19,7 +19,7 @@ class Cookie
 {
     protected $name;
     protected $value;
-    protected $expire;
+    protected $expires;
     protected $path;
     protected $domain;
     protected $secure;
@@ -36,7 +36,7 @@ class Cookie
     {
         $this->name     = $name;
         $this->value    = $value;
-        $this->expire   = $expire;
+        $this->expires  = $expire;
         $this->path     = $path;
         $this->domain   = $domain;
         $this->secure   = $secure;
@@ -45,6 +45,10 @@ class Cookie
 
     public function __get($key)
     {
+        if ('expire' == $key) {
+            return $this->expires;
+        }
+
         return $this->$key;
     }
 
@@ -73,9 +77,6 @@ class Cookie
             switch ($data[0]) {
             // string-literal values
             case 'expires':
-                $this->expire = $data[1];
-                break;
-
             case 'path':
             case 'domain':
                 $this->$data[0] = $data[1];
@@ -102,7 +103,7 @@ class Cookie
     
     public function getExpire()
     {
-        return $this->expire;
+        return $this->expires;
     }
     
     public function getPath()
@@ -127,7 +128,23 @@ class Cookie
     
     public function toString()
     {
-        // value[; expires=date][; domain=domain][; path=path][; secure]
+        $cookie[] = "$this->name=$this->value";
+
+        foreach(['expires', 'path', 'domain'] as $part) {
+            if (! empty($this->$part)) {
+                $cookie[] = "$part=$this->$part";
+            }
+        }
+
+        if ($this->secure) {
+            $cookie[] = 'secure';
+        }
+
+        if ($this->httponly) {
+            $cookie[] = 'HttpOnly';
+        }
+
+        return implode('; ', $cookie);
     }
 
     public function __toString()

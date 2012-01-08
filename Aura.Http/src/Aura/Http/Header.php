@@ -6,7 +6,7 @@
  * @license http://opensource.org/licenses/bsd-license.php BSD
  * 
  */
-namespace Aura\Header;
+namespace Aura\Http;
 
 /**
  * 
@@ -17,12 +17,40 @@ namespace Aura\Header;
  */
 class Header
 {
-    public function __construct($label, $value);
-    public function __get($key);
-    public function getLabel();
-    public function getValue();
-    public function toString();
-    public function __toString();
+    protected $label;
+    protected $value;
+
+
+    public function __construct($label, $value)
+    {
+        $this->label = $this->sanitizeLabel($label);
+        $this->value = $value;
+    }
+
+    public function __get($key)
+    {
+        return $this->$key;
+    }
+
+    public function getLabel()
+    {
+        return $this->label;
+    }
+
+    public function getValue()
+    {
+        return $this->value;
+    }
+
+    public function toString()
+    {
+        return sprintf('%s: %s', $this->label, $this->value);
+    }
+
+    public function __toString()
+    {
+        return $this->toString();
+    }
     
     /**
      * 

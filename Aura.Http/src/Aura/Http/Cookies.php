@@ -8,7 +8,7 @@
  */
 namespace Aura\Http;
 
-use Aura\Http\Factory as CookieFactory;
+use Aura\Http\Factory\Cookie as CookieFactory;
 
 /**
  * 
@@ -27,6 +27,8 @@ class Cookies implements \IteratorAggregate, \Countable
      * 
      */
     protected $list = [];
+
+    protected $factory;
 
     /**
      *
@@ -74,6 +76,20 @@ class Cookies implements \IteratorAggregate, \Countable
     public function __isset($key)
     {
         return isset($this->list[$key]);
+    }
+    
+    /**
+     * 
+     * Unset a cookie.
+     * 
+     * @param string $key 
+     * 
+     * @return void
+     * 
+     */
+    public function __unset($key)
+    {
+        unset($this->list[$key]);
     }
     
     /**

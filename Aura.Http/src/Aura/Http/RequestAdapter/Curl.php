@@ -8,6 +8,9 @@
  */
 namespace Aura\Http\RequestAdapter;
 
+use Aura\Http\Request;
+use Aura\Http\Headers;
+
 /**
  * 
  * Curl request adapter for the Aura Request library.
@@ -238,7 +241,7 @@ class Curl implements \Aura\Http\AbstractRequest
      * 
      * @param string $version
      * 
-     * @param array $headers
+     * @param Headers $headers
      * 
      * @param string $content
      * 
@@ -249,7 +252,7 @@ class Curl implements \Aura\Http\AbstractRequest
      * @throws Exception\EmptyResponse
      * 
      */
-    public function exec($method, $version, array $headers, $content)
+    public function exec($method, $version, Headers $headers, $content)
     {
         $this->setMethod($method);
         $this->setVersion($version);
@@ -260,7 +263,7 @@ class Curl implements \Aura\Http\AbstractRequest
         
         if ($send_content) {
             if (is_array($content) && 
-                false === strpos($headers['Content-Type'], 'multipart/form-data')) {
+                false === strpos($headers->{'Content-Type'}, 'multipart/form-data')) {
                 // content does not contain any files
                 $content = http_build_query($content);
             }
@@ -362,31 +365,30 @@ class Curl implements \Aura\Http\AbstractRequest
      * @param array $headers
      *
      */
-    protected function setHeaders(array $headers)
+    protected function setHeaders(Headers $headers)
     {
         // set specialized headers and retain all others
-        if (isset($headers['Cookie'])) {
+  /*      if (isset($headers['Cookie'])) {
             curl_setopt($this->ch, CURLOPT_COOKIE, $headers['Cookie']);
             unset($headers['Cookie']);
+        }*/
+        
+        if (isset($headers->{'User-Agent'})) {
+            curl_setopt($this->ch, CURLOPT_USERAGENT, $headers->{'User-Agent'});
+            unset($headers->{'User-Agent'});
         }
         
-        if (isset($headers['User-Agent'])) {
-            curl_setopt($this->ch, CURLOPT_USERAGENT, $headers['User-Agent']);
-            unset($headers['User-Agent']);
-        }
-        
-        if (isset($headers['Referer'])) {
-            curl_setopt($this->ch, CURLOPT_REFERER, $headers['Referer']);
-            unset($headers['Referer']);
+        if (isset($headers->{'Referer'})) {
+            curl_setopt($this->ch, CURLOPT_REFERER, $headers->{'Referer'});
+            unset($headers->{'Referer'});
         }
         
         // all remaining headers
         if ($headers) {
-            $prepared_headers = array();
-            foreach ($headers as $key => $set) {
-                settype($set, 'array');
-                foreach ($set as $val) {
-                    $prepared_headers[] = "{$key}: {$val}";
+            $prepared_headers = [];
+            foreach ($headers as $set) {
+                foreach ($set as $header) {
+                    $prepared_headers[] = $header->toString();
                 }
             }
             curl_setopt($this->ch, CURLOPT_HTTPHEADER, $prepared_headers);

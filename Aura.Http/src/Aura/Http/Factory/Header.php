@@ -31,6 +31,6 @@ class Header
      */
     public function newInstance($label, $value)
     {
-        return new Aura\Http\Header($label, $value);
+        return new \Aura\Http\Header($label, $value);
     }
 }

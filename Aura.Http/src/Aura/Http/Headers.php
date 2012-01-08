@@ -8,6 +8,8 @@
  */
 namespace Aura\Http;
 
+use Aura\Http\Factory\Header as HeaderFactory;
+
 /**
  * 
  * Collection of non-cookie HTTP headers.
@@ -15,7 +17,7 @@ namespace Aura\Http;
  * @package Aura.Http
  * 
  */
-class ResponseHeaders implements \IteratorAggregate, \Countable
+class Headers implements \IteratorAggregate, \Countable
 {
     /**
      * 
@@ -26,6 +28,18 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
      */
     protected $list = array();
     
+
+    protected $factory;
+
+    /**
+     *
+     * @param HeaderFactory $factory
+     *
+     */
+    public function __construct(HeaderFactory $factory)
+    {
+        $this->factory = $factory;
+    }
     /**
      * 
      * Reset the list of headers.
@@ -47,7 +61,7 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
      */
     public function __get($key)
     {
-        return $this->list[$key];
+        return $this->list[$key][0]; // todo desired behaviour?
     }
     
     /**
@@ -66,6 +80,20 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
     
     /**
      * 
+     * Unset a header.
+     * 
+     * @param string $key 
+     * 
+     * @return void
+     * 
+     */
+    public function __unset($key)
+    {
+        unset($this->list[$key]);
+    }
+    
+    /**
+     * 
      * Count the number of headers.
      * 
      * @return integer
@@ -74,6 +102,22 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
     public function count()
     {
         return count($this->list, COUNT_RECURSIVE);
+    }
+    
+    /**
+     * 
+     * Returns a header.
+     * 
+     * @return array
+     * 
+     */
+    public function get($label, $list = true)
+    {
+        if ($list) {
+            return $this->list[$label];
+        }
+
+        return $this->list[$label][0];
     }
     
     /**
@@ -114,13 +158,13 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
      */
     public function add($label, $value)
     {
-        if ($name instanceof Header) {
+        if ($label instanceof Header) {
             $header = $name;
         } else {
             $header = $this->factory->newInstance($label, $value);
         }
 
-        $this->list[$header->getName()][] = $header;
+        $this->list[$header->getLabel()][] = $header;
     }
     
     /**
@@ -136,13 +180,13 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
      */
     public function set($label, $value)
     {
-        if ($name instanceof Header) {
+        if ($label instanceof Header) {
             $header = $name;
         } else {
             $header = $this->factory->newInstance($label, $value);
         }
 
-        $this->list[$header->getName()] = array($header);
+        $this->list[$header->getlabel()] = array($header);
     }
     
     /**
@@ -175,7 +219,7 @@ class ResponseHeaders implements \IteratorAggregate, \Countable
     {
         foreach ($this->list as $values) {
             foreach ($values as $header) {
-                header("$header->getLabel(): $header->getValue()");
+                header($header->toString());
             }
         }
     }

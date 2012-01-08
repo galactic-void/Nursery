@@ -139,14 +139,14 @@ class RequestResponse
 
     /**
      * 
-     * @param Aura\Http\ResponseHeaders $headers
+     * @param Aura\Http\Headers $headers
      * 
-     * @param Aura\Http\ResponseCookies $cookies
+     * @param Aura\Http\Cookies $cookies
      *
      */
     public function __construct(
-        ResponseHeaders $headers,
-        ResponseCookies $cookies
+        Headers $headers,
+        Cookies $cookies
     )
     {
         $this->headers = $headers;
@@ -250,7 +250,7 @@ class RequestResponse
         }
 
         if (isset($this->headers->{'Content-Encoding'})) {
-            $encoding = $this->headers->{'Content-Encoding'}[0];// xxx
+            $encoding = $this->headers->{'Content-Encoding'};
         } else {
             $encoding = false;
         }

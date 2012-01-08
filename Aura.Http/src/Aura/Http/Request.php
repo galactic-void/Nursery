@@ -129,19 +129,19 @@ class Request
      * 
      * The headers to use.
      * 
-     * @var array
+     * @var Aura\Http\Headers
      *
      */
-    protected $headers = [];
+    protected $headers;
     
     /**
      * 
      * The cookies to use.
      * 
-     * @var array
+     * @var Aura\Http\Cookies
      *
      */
-    protected $cookies = [];
+    protected $cookies;
     
     /**
      * 
@@ -199,9 +199,15 @@ class Request
      * reset().
      * 
      */
-    public function __construct(AbstractRequest $adapter, array $opts = [])
+    public function __construct(
+        AbstractRequest $adapter, 
+        Headers $headers,
+        Cookies $cookies,
+        array $opts = [])
     {
         $this->adapter = $adapter;
+        $this->cookies = $cookies;
+        $this->headers = $headers;
         
         // Use reset to setup the default options.
         $this->reset();
@@ -234,8 +240,8 @@ class Request
     {
         $this->url     = null;
         $this->content = null;
-        $this->headers = [];
-        $this->cookies = [];
+        $this->headers = clone $this->headers;
+        $this->cookies = clone $this->cookies;
         $this->options = new \ArrayObject([], \ArrayObject::ARRAY_AS_PROPS);
         
         $this->setDefaults();
@@ -276,17 +282,14 @@ class Request
             if ($this->charset) {
                 $this->content_type .= "; charset={$this->charset}";
             }
-            $this->headers['Content-Type'] = $this->content_type;
+            $this->headers->set('Content-Type', $this->content_type);
         }
         
         // bake cookies
-        if ($this->cookies) {
-            $cookies = '';
-
-            foreach ($this->cookies as $name => $value) {
-                $cookies .= "{$name}={$value}; ";
+        if (count($this->cookies)) {
+            foreach ($this->cookies as $cookie) {
+                $this->headers->add('Set-Cookie', $cookie->toString());
             }
-            $this->headers['Cookie'] = trim($cookies, '; ');
         }
         
         return $this->adapter->exec($this->method,  $this->version, 
@@ -529,39 +532,34 @@ class Request
      */
     public function setHeader($key, $val, $replace = true)
     {
-        // normalize the header key and keep a lower-case version
-        $key = $this->sanitizeLabel($key);
-        $low = strtolower($key);
-        
         // use special methods when available
         $special = [
-            'content-type'  => 'setContentType',
-            'http'          => 'setVersion',
-            'referer'       => 'setReferer',
-            'user-agent'    => 'setUserAgent',
+            'Content-Type'  => 'setContentType',
+            'Http'          => 'setVersion',
+            'Referer'       => 'setReferer',
+            'User-Agent'    => 'setUserAgent',
         ];
         
-        if (! empty($special[$low])) {
-            $method = $special[$low];
+        if (! empty($special[$key])) {
+            $method = $special[$key];
             return $this->$method($val);
         }
         
         // don't allow setting of cookies
-        if ($low == 'cookie') {
+        if ($key == 'Set-Cookie' || $key == 'Cookie') {
             throw new Exception('Use setCookie() instead.');
         }
         
         // how to add the header?
         if ($val === null || $val === false) {
             // delete the key
-            unset($this->headers[$key]);
-        } else if ($replace || empty($this->headers[$key])) {
+            unset($this->headers->$key);
+        } else if ($replace || empty($this->headers->$key)) {
             // replacement, or first instance of the key
-            $this->headers[$key] = $val;
+            $this->headers->set($key, $val);
         } else {
             // second or later instance of the key
-            settype($this->headers[$key], 'array');
-            $this->headers[$key][] = $val;
+            $this->headers->add($key, $val);
         }
         
         // done
@@ -583,14 +581,12 @@ class Request
      */
     public function setCookie($name, $spec = null)
     {
-        if (is_scalar($spec)) {
-            $value = (string) $spec;
-        } else {
-            $value = $spec['value'];
-        }
-        
-        $name = str_replace(["\r", "\n"], '', $name);
-        $this->cookies[$name] = $value;
+        if (null !== $spec && is_scalar($spec)) {
+            $spec = ['value' => $spec];
+        } 
+
+        $this->cookies->set($name, $spec);
+
         return $this;
     }
     
@@ -609,7 +605,7 @@ class Request
             throw new Exception\FullUrlExpected();
         }
 
-        $this->headers['Referer'] = $spec;
+        $this->headers->set('Referer', $spec);
         return $this;
     }
     
@@ -624,7 +620,7 @@ class Request
      */
     public function setUserAgent($val)
     {
-        $this->headers['User-Agent'] = $val;
+        $this->headers->set('User-Agent', $val);
         return $this;
     }
     
@@ -646,12 +642,12 @@ class Request
     {
         if ($encoding && ! function_exists('gzinflate')) {
             throw new Exception('Zlib extension is not loaded.');
-        } else if (!$encoding) {
-            unset($this->headers['Accept-Encoding']);
+        } else if (! $encoding) {
+            unset($this->headers->{'Accept-Encoding'});
             return $this;
         }
         
-        $this->headers['Accept-Encoding'] = 'gzip,deflate';
+        $this->headers->set('Accept-Encoding', 'gzip,deflate');
         
         return $this;
     }
@@ -879,27 +875,6 @@ class Request
             $this->content      = null;
             $this->content_type = null;
         }
-    }
-
-    /**
-     * 
-     * Sanitizes header labels by removing all characters besides [a-zA-z0-9_-].
-     * 
-     * Underscores are converted to dashes, and word case is normalized.
-     * 
-     * Converts "foo \r bar_ baz-dib \n 9" to "Foobar-Baz-Dib9".
-     * 
-     * @param string $label The header label to sanitize.
-     * 
-     * @return string The sanitized header label.
-     * 
-     */
-    protected function sanitizeLabel($label)
-    {
-        $label = preg_replace('/[^a-zA-Z0-9_-]/', '', $label);
-        $label = ucwords(strtolower(str_replace(['-', '_'], ' ', $label)));
-        $label = str_replace(' ', '-', $label);
-        return $label;
     }
     
     /**

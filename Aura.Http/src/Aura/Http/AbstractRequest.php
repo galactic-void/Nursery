@@ -59,7 +59,7 @@ interface AbstractRequest
      * 
      * @param string $version
      * 
-     * @param array $headers
+     * @param Headers $headers
      * 
      * @param string $content
      * 
@@ -70,5 +70,5 @@ interface AbstractRequest
      * @throws Exception\EmptyResponse
      * 
      */
-    public function exec($method, $version, array $headers, $content);
+    public function exec($method, $version, Headers $headers, $content);
 }

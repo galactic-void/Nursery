@@ -48,7 +48,7 @@ class Cookie
     public function newInstance($name = null, array $params)
     {
         $params = array_merge($this->params, $params);
-        return new Aura\Http\Cookie(
+        return new \Aura\Http\Cookie(
             $name,
             $params['value'],
             $params['expire'],
