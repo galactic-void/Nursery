@@ -8,7 +8,7 @@
  */
 namespace Aura\Http;
 
-use Aura\Uri\Http as HttpUri;
+use Aura\Http\Request\Adapter as Adapter;
 
 /**
  * 
@@ -156,6 +156,24 @@ class Request
     
     /**
      * 
+     * Proxy hostname, port, username and password.
+     * 
+     * @var \ArrayObject
+     *
+     */
+    protected $proxy;
+
+    /**
+     * 
+     * Ssl options.
+     * 
+     * @var \ArrayObject
+     *
+     */
+    protected $ssl;
+    
+    /**
+     * 
      * The content to use for the request.
      * 
      * @var string
@@ -183,9 +201,9 @@ class Request
     
     /**
      * 
-     * Request adapter to use.
+     * Request adapter.
      * 
-     * @var \Aura\Http\AbstractRequest
+     * @var \Aura\Http\Adapter\AdapterInterface
      * 
      */
     protected $adapter;
@@ -193,14 +211,18 @@ class Request
 
     /**
      * 
-     * @param \Aura\Http\AbstractRequest $adapter
+     * @param \Aura\Http\Adapter\AdapterInterface $adapter
+     * 
+     * @param \Aura\Http\Headers $headers
+     * 
+     * @param \Aura\Http\Cookies $cookies
      * 
      * @param array $opts Default options, these options survive cloning and
      * reset().
      * 
      */
     public function __construct(
-        AbstractRequest $adapter, 
+        Adapter\AdapterInterface $adapter, 
         Headers $headers,
         Cookies $cookies,
         array $opts = [])
@@ -215,6 +237,30 @@ class Request
         if ($opts) {
             $this->default_opts = array_merge($this->default_opts, $opts);
         }
+    }
+
+    /**
+     * 
+     * Read only access to certain properties.
+     *
+     * @param string $key
+     *
+     * @return mixed
+     * 
+     * @throws Aura\Http\Exception If property does not exist.
+     *
+     */
+    public function __get($key)
+    {
+        $valid = [
+            'url', 'content', 'headers', 'options', 'proxy', 
+            'method', 'version', 'ssl'];
+
+        if (in_array($key, $valid)) {
+            return $this->$key;
+        }
+
+        throw new Exception("Property `$key` does not exist.");
     }
     
     /**
@@ -243,6 +289,8 @@ class Request
         $this->headers = clone $this->headers;
         $this->cookies = clone $this->cookies;
         $this->options = new \ArrayObject([], \ArrayObject::ARRAY_AS_PROPS);
+        $this->proxy   = new \ArrayObject([], \ArrayObject::ARRAY_AS_PROPS);
+        $this->ssl     = new \ArrayObject([], \ArrayObject::ARRAY_AS_PROPS);
         
         $this->setDefaults();
         
@@ -256,10 +304,10 @@ class Request
      * @param string $save_to The file or directory to save the content to.
      * Defaults to null. 
      * 
-     * @return \SplStack Ordered by last in first out.
+     * @return Aura\Http\Request\ResponseStack Ordered by last in first out.
      * 
      */
-    public function send($save_to = null)
+    public function send($save_to = null) // todo make save_to into method and change to $url (setUrl alias)
     {
         if (! $this->url) {
             throw new Exception('This request has no URL.');
@@ -270,12 +318,9 @@ class Request
             $this->setEncoding(false);
         }
 
-        $this->options->file = $save_to;
+        $this->options->save_to_folder = $save_to;// todo check is folder/writeable and remove trailing slash
         
         $this->prepareContent();
-        
-        $this->adapter->connect($this->url);
-        $this->adapter->setOptions($this->options);
         
         // force the content-type header if needed
         if ($this->content_type) { 
@@ -292,22 +337,7 @@ class Request
             }
         }
         
-        return $this->adapter->exec($this->method,  $this->version, 
-                                    $this->headers, $this->content);
-    }
-
-    /**
-     *
-     *
-     * @param 
-     *
-     * @return 
-     *
-     */
-    public function get($url)
-    {
-        $this->setMethod(self::GET);
-        return $this->send($url);
+        return $this->adapter->exec($this);
     }
     
     /**
@@ -323,7 +353,7 @@ class Request
     public function setCookieJar($file)
     {
         if ($file) {
-            $this->options->cookiejar = $file;
+            $this->options->cookiejar = $file;// todo is not writeable?
         } else {
             // don't save cookies and remove the cookies file
             if (isset($this->options->cookiejar) && 
@@ -383,6 +413,8 @@ class Request
      * @param string $spec The URL for the request.
      * 
      * @return Aura\Http\Request This object.
+     * 
+     * @throws Aura\Http\Exception\FullUrlExpected
      * 
      */
     public function setUrl($spec)
@@ -532,21 +564,23 @@ class Request
      */
     public function setHeader($key, $val, $replace = true)
     {
+        $low = strtolower($key);
+
         // use special methods when available
         $special = [
-            'Content-Type'  => 'setContentType',
-            'Http'          => 'setVersion',
-            'Referer'       => 'setReferer',
-            'User-Agent'    => 'setUserAgent',
+            'content-type'  => 'setContentType',
+            'http'          => 'setVersion',
+            'referer'       => 'setReferer',
+            'user-agent'    => 'setUserAgent',
         ];
         
-        if (! empty($special[$key])) {
-            $method = $special[$key];
+        if (! empty($special[$low])) {
+            $method = $special[$low];
             return $this->$method($val);
         }
         
         // don't allow setting of cookies
-        if ($key == 'Set-Cookie' || $key == 'Cookie') {
+        if ($low == 'set-cookie' || $low == 'cookie') {
             throw new Exception('Use setCookie() instead.');
         }
         
@@ -597,6 +631,8 @@ class Request
      * @param string $spec The referer URL.
      * 
      * @return Aura\Http\Request This object.
+     * 
+     * @throws Aura\Http\Exception\FullUrlExpected
      * 
      */
     public function setReferer($spec)
@@ -660,7 +696,7 @@ class Request
      * 
      * @return Aura\Http\Request This object.
      * 
-     * @todo username/password
+     * @throws Aura\Http\Exception\FullUrlExpected
      * 
      */
     public function setProxy($spec, $port = null)
@@ -669,16 +705,41 @@ class Request
             throw new Exception\FullUrlExpected();
         }
 
-        $this->options->proxy = $spec;
+        $this->proxy->url  = $spec;
+        $this->proxy->port = $port;
+
+        return $this;
+    }
+
+    /**
+     *
+     * Set a user name and password for the proxy. If user name and password
+     * are false the previous (if any) user name and password are removed.
+     *
+     * @param string $usr
+     * 
+     * @param string $pass
+     *
+     * @return Aura\Http\Request This object.
+     *
+     */
+    public function setProxyUserPass($user, $pass)
+    {
+        if ($user && $pass) {
+            $this->proxy->usrpass = "$user:$pass";
+        } else {
+            $this->proxy->usrpass = null;
+        }
 
         return $this;
     }
     
     /**
      * 
-     * When making the request, allow no more than this many redirects.
+     * When making the request, allow no more than this many redirects. 
      * 
-     * @param int $max The max number of redirects to allow.
+     * @param int $max The max number of redirects to allow. If false the
+     * default number of max_redirects is set.
      * 
      * @return Aura\Http\Request This object.
      * 
@@ -697,7 +758,8 @@ class Request
      * 
      * Sets the request timeout in seconds.
      * 
-     * @param float $time The timeout in seconds.
+     * @param float $time The timeout in seconds. If false the default timeout
+     * is set.
      * 
      * @return Aura\Http\Request This object.
      * 
@@ -723,7 +785,7 @@ class Request
      */
     public function setSslVerifyPeer($flag)
     {
-        $this->options->ssl_verify_peer = (bool) $flag;
+        $this->ssl->ssl_verify_peer = (bool) $flag;
         return $this;
     }
     
@@ -740,7 +802,7 @@ class Request
      */
     public function setSslCafile($val)
     {
-        $this->options->ssl_cafile = $val;
+        $this->ssl->ssl_cafile = $val;
         return $this;
     }
     
@@ -758,7 +820,7 @@ class Request
      */
     public function setSslCapath($val)
     {
-        $this->options->ssl_capath = $val;
+        $this->ssl->ssl_capath = $val;
         return $this;
     }
     
@@ -775,7 +837,7 @@ class Request
      */
     public function setSslLocalCert($val)
     {
-        $this->options->ssl_local_cert = $val;
+        $this->ssl->ssl_local_cert = $val;
         return $this;
     }
     
@@ -790,7 +852,7 @@ class Request
      */
     public function setSslPassphrase($val)
     {
-        $this->options->ssl_passphrase = $val;
+        $this->ssl->ssl_passphrase = $val;
         return $this;
     }
 
@@ -812,10 +874,10 @@ class Request
 
         case (is_array($this->content) && ($is_post || $is_put)):
             // is a POST or PUT with a data array. 
-            $has_files = function ($content) use (&$has_files) {
-                
-                foreach ($content as $key => $value) {
 
+            // Does the content include files?
+            $has_files = function ($content) use (&$has_files) {
+                foreach ($content as $key => $value) {
                     if ((is_array($value) && $has_files($value)) ||
                         '@' == $value[0]) {
                         
@@ -826,26 +888,7 @@ class Request
                 return false;
             };
 
-            // flatten a multidimensional array - [foo => [1,2]] becomes
-            // ['foo[0]' => 1, 'foo[1]' => 2]
-            $flatten_content = function ($array, $return = [], $prefix = '')
-                                    use (&$flatten_content)
-            {
-                foreach ($array as $key => $value) {
-                    if (is_array($value)) {
-                        $_prefix = $prefix ? $prefix . '[' . $key . ']' : $key;
-                        $return  = $flatten_content($value, $return, $_prefix); 
-                    } else {
-                        $_key = $prefix ? $prefix . '[' . $key . ']' : $key;
-                        $return[$_key] = $value;
-                    }
-                }
-
-                return $return;
-            };
-
             if ($has_files($this->content)) {
-                $this->content      = $flatten_content($this->content);
                 $this->content_type = 'multipart/form-data';
             } else {
                 $this->content_type = 'application/x-www-form-urlencoded';
@@ -861,7 +904,7 @@ class Request
             // is a GET with a data array.
             // merge the content array with the query.
             $url          = parse_url($this->url);
-            $query        = isset($url['query']) ? $url['query'] : array();
+            $query        = isset($url['query']) ? $url['query'] : [];
             $url['query'] = http_build_query($query + $this->content);
             $this->url    = $this->buildUrl($url);
 

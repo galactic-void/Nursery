@@ -6,17 +6,19 @@
  * @license http://opensource.org/licenses/bsd-license.php BSD
  * 
  */
-namespace Aura\Http;
+namespace Aura\Http\Request;
 
+use Aura\Http\Headers;
+use Aura\Http\Cookies;
 
 /**
  * 
  * The results of a request.
  * 
- * @package aura.http
+ * @package Aura.Http
  * 
  */
-class RequestResponse
+class Response
 {
     /**
      * 
@@ -50,7 +52,7 @@ class RequestResponse
      * 
      * Response headers excluding the cookies
      *
-     * @var Aura\Http\ResponseHeaders
+     * @var Aura\Http\Headers
      *
      */
     protected $headers;

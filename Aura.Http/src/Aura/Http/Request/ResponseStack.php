@@ -6,12 +6,16 @@
  * @license http://opensource.org/licenses/bsd-license.php BSD
  * 
  */
-namespace Aura\Http;
-
+namespace Aura\Http\Request;
 
 /**
+ * 
+ * 
  * 
  * @package Aura.Http
  * 
  */
-class Exception extends \Exception {}
+class ResponseStack extends \SplStack
+{
+    
+}

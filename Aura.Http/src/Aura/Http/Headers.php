@@ -26,20 +26,25 @@ class Headers implements \IteratorAggregate, \Countable
      * @var array
      * 
      */
-    protected $list = array();
+    protected $list = [];
     
-
+    /**
+     * 
+     * @var Aura\Http\Factory\Header
+     * 
+     */
     protected $factory;
 
     /**
      *
-     * @param HeaderFactory $factory
+     * @param Aura\Http\Factory\Header $factory
      *
      */
     public function __construct(HeaderFactory $factory)
     {
         $this->factory = $factory;
     }
+
     /**
      * 
      * Reset the list of headers.
@@ -47,7 +52,7 @@ class Headers implements \IteratorAggregate, \Countable
      */
     public function __clone()
     {
-        $this->list = array();
+        $this->list = [];
     }
     
     /**
@@ -108,7 +113,12 @@ class Headers implements \IteratorAggregate, \Countable
      * 
      * Returns a header.
      * 
-     * @return array
+     * @param string $label
+     * 
+     * @param boolean $list If true an array of `Aura\Http\Header` is returned 
+     * else a `Aura\Http\Header` is return containing the first result.
+     * 
+     * @return Aura\Http\Header|array
      * 
      */
     public function get($label, $list = true)
@@ -159,7 +169,7 @@ class Headers implements \IteratorAggregate, \Countable
     public function add($label, $value)
     {
         if ($label instanceof Header) {
-            $header = $name;
+            $header = $label;
         } else {
             $header = $this->factory->newInstance($label, $value);
         }
@@ -181,12 +191,12 @@ class Headers implements \IteratorAggregate, \Countable
     public function set($label, $value)
     {
         if ($label instanceof Header) {
-            $header = $name;
+            $header = $label;
         } else {
             $header = $this->factory->newInstance($label, $value);
         }
 
-        $this->list[$header->getlabel()] = array($header);
+        $this->list[$header->getlabel()] = [$header];
     }
     
     /**
@@ -199,7 +209,7 @@ class Headers implements \IteratorAggregate, \Countable
      * @return void
      * 
      */
-    public function setAll(array $headers = array())
+    public function setAll(array $headers = [])
     {
         foreach ($headers as $label => $values) {
             foreach ((array) $values as $value) {

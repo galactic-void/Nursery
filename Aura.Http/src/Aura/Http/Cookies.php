@@ -28,11 +28,16 @@ class Cookies implements \IteratorAggregate, \Countable
      */
     protected $list = [];
 
+    /**
+     * 
+     * @var Aura\Http\Factory\Cookie
+     * 
+     */
     protected $factory;
 
     /**
      *
-     * @param CookieFactory $factory
+     * @param Aura\Http\Factory\Cookie $factory
      *
      */
     public function __construct(CookieFactory $factory)
@@ -70,7 +75,7 @@ class Cookies implements \IteratorAggregate, \Countable
      * 
      * @param string $key 
      * 
-     * @return bool
+     * @return boolean
      * 
      */
     public function __isset($key)
@@ -125,7 +130,7 @@ class Cookies implements \IteratorAggregate, \Countable
      * @param array $info The cookie info.
      * 
      */
-    public function set($name, array $info = array())
+    public function set($name, array $info = [])
     {
         if ($name instanceof Cookie) {
             $cookie = $name;
@@ -176,7 +181,7 @@ class Cookies implements \IteratorAggregate, \Countable
      * @return void
      * 
      */
-    public function setAll(array $cookies = array())
+    public function setAll(array $cookies = [])
     {
         $this->list = [];
         foreach ($cookies as $name => $info) {
