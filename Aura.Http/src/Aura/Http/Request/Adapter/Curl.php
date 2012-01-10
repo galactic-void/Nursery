@@ -262,13 +262,15 @@ class Curl implements AdapterInterface
         // return the transfer as a string instead of printing it
         curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
         
+        $folder = empty($options->save_to_folder) 
+                    ? null : $options->save_to_folder;
+                    
         curl_setopt($this->ch, CURLOPT_WRITEFUNCTION, 
             // bit of a kludge but we need to tell the content callback
             // where to save the content to.
-            function ($ch, $content) use ($options) {
+            function ($ch, $content) use ($folder) {
                 return $this->builder
-                            ->saveContentCallback($ch, $content, 
-                                    $options->save_to_folder);
+                            ->saveContentCallback($ch, $content, $folder);
             });
         curl_setopt($this->ch, CURLOPT_HEADERFUNCTION,
                 [$this->builder, 'saveHeaderCallback']);

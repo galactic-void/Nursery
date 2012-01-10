@@ -354,7 +354,8 @@ class Request
         }
 
         // turn off encoding if we are saving the content to a file.
-        if ($save_to) {
+        if (isset($this->options->save_to_folder) && 
+            $this->options->save_to_folder) {
             $this->setEncoding(false);
         }
 
