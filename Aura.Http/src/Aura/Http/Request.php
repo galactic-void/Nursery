@@ -262,6 +262,42 @@ class Request
 
         throw new Exception("Property `$key` does not exist.");
     }
+
+    /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    public function __call($method, $args)
+    {
+        switch ($method) {
+        
+        case 'get':
+            $request_method = self::GET;
+            break;
+
+        case 'post':
+            $request_method = self::POST;
+            break;
+
+        case 'put':
+            $request_method = self::PUT;
+            break;
+
+        case 'delete':
+            $request_method = self::DELETE;
+            break;
+
+        default:
+            throw new Exception("Method `$method` does not exist.");
+        }
+
+        $url = empty($args) ? null : $args[0];
+        return $this->setMethod($request_method)->send($url);
+    }
     
     /**
      * 
@@ -301,14 +337,18 @@ class Request
      * 
      * Send the HTTP request.
      *
-     * @param string $save_to The file or directory to save the content to.
-     * Defaults to null. 
+     * @param string $url Alias for setUrl. It will overwrite the 
+     * previous (if set) URL.
      * 
      * @return Aura\Http\Request\ResponseStack Ordered by last in first out.
      * 
      */
-    public function send($save_to = null) // todo make save_to into method and change to $url (setUrl alias)
+    public function send($url = null) 
     {
+        if ($url) {
+            $this->setUrl($url);
+        }
+
         if (! $this->url) {
             throw new Exception('This request has no URL.');
         }
@@ -318,8 +358,6 @@ class Request
             $this->setEncoding(false);
         }
 
-        $this->options->save_to_folder = $save_to;// todo check is folder/writeable and remove trailing slash
-        
         $this->prepareContent();
         
         // force the content-type header if needed
@@ -348,12 +386,23 @@ class Request
      * @param string $file 
      *
      * @return Aura\Http\Request This object.
+     * 
+     * @throws Aura\Http\Exception\NotWriteable
      *
      */
     public function setCookieJar($file)
     {
         if ($file) {
-            $this->options->cookiejar = $file;// todo is not writeable?
+            $dir = dirname($file);
+
+            if ((is_file($file) && is_writeable($file)) ||
+                (is_dir($dir) && is_writeable($dir))) {
+
+                $this->options->cookiejar = $file;
+            } else {
+                $msg = "Unable to create or update cookie file. `$file`";
+                throw new Exception\NotWriteable($msg);
+            }
         } else {
             // don't save cookies and remove the cookies file
             if (isset($this->options->cookiejar) && 
@@ -397,7 +446,8 @@ class Request
             throw new Exception\UnknownAuthType("Unknown auth type '$authtype'");
 
         } else if (strpos($handle, ':') !== false) {
-            throw new Exception\InvalidHandle('The handle can not contain a colon (:)');
+            $msg = 'The handle can not contain a colon (:)';
+            throw new Exception\InvalidHandle($msg);
 
         }
         
@@ -426,6 +476,30 @@ class Request
         $this->url = $spec;
 
         return $this;
+    }
+
+    /**
+     *
+     * Save the content of the request to this folder
+     *
+     * @param string $save A writeable folder.
+     *
+     * @return Aura\Http\Request This object.
+     * 
+     * @throws Aura\Http\Exception\NotWriteable
+     *
+     */
+    public function saveTo($save)
+    {
+        $save = trim($save, DIRECTORY_SEPARATOR);
+        $save = realpath($save);
+
+        if (is_dir($save) && is_writeable($save)) {
+            $this->options->save_to_folder = $save;
+            return $this;
+        }
+
+        throw new Exception\NotWriteable("Can not write to directory `$save`");
     }
         
     /**

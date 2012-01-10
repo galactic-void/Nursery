@@ -4,4 +4,3 @@ OAuth integration?
 Optional use of Aura\Signal
 The code duplication in Response and Request\Response
 Do we care about send method in Cookies and Headers when used with Request
-get, post, put, delete convenience methods

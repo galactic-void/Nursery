@@ -108,9 +108,11 @@ class Curl implements AdapterInterface
 
             if (is_array($request->content) && $has_files) {
                 $content = $this->flattenContent($request->content);
-            } else {
+            } else if (is_array($request->content)) {
                 // content does not contain any files
                 $content = http_build_query($request->content);
+            } else {
+                $content = $request->content;
             }
 
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $content);
@@ -208,7 +210,7 @@ class Curl implements AdapterInterface
 
     /**
      * 
-     * Setup the remain request options including auth, timeout, max redirects
+     * Setup the remaining request options including auth, timeout, max redirects
      * and callbacks.
      * 
      * @param \ArrayObject $options

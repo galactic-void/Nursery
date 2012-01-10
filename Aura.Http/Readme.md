@@ -18,9 +18,7 @@
 ## Making a Request
 Making a GET request to Github to list Auras repositories in JSON format:
 
-    $response = $request->setUrl('http://github.com/api/v2/json/repos/show/auraphp')
-                        ->setMethod(Request::GET) // Not necessary unless you have changed the default options; GET is the default.
-                        ->send();
+    $response = $request->send('http://github.com/api/v2/json/repos/show/auraphp');
 
 The `$response` is a `\SplStack` containing all the responses including redirects, the stack order is last in first out. Each item in the stack is a `\Aura\Http\RequestResponse` object.
 
