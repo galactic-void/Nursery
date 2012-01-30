@@ -27,7 +27,7 @@ interface AdapterInterface
      * @param array $options Adapter specific options and defaults.
      * 
      */
-    public function __construct(ResponseBuilder $builder, array $options = []);
+    //public function __construct(ResponseBuilder $builder, array $options = []);
 
     /**
      * 
