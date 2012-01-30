@@ -1,9 +1,10 @@
-Stream adapter
+Socket adaptor
 OAuth integration?
-Optional use of Aura\Signal
-Do we care about send method in Cookies and Headers when used with Request?
-Adapter independent Cookiejar
+Optional use of Aura\Signal?
+Merge Aura\Http Headers Cookies & Response with Aura\Http\Request Headers Cookies & Response
 
+Stream - Proxy Digest auth
+Stream - Store Digest auth challenge
+Stream - HTTP digest auth-ini support
 Curl   - Check memory usage of @/path/file.ext
-Stream - HTTP digest auth-int support
-Stream - Store HTTP Digest challenge
+*      - Adaptor independent Cookiejar
