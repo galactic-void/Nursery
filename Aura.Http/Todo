@@ -1,4 +1,4 @@
-Socket adaptor
+Socket adapter
 OAuth integration?
 Optional use of Aura\Signal?
 Merge Aura\Http Headers Cookies & Response with Aura\Http\Request Headers Cookies & Response
@@ -7,4 +7,4 @@ Stream - Proxy Digest auth
 Stream - Store Digest auth challenge
 Stream - HTTP digest auth-ini support
 Curl   - Check memory usage of @/path/file.ext
-*      - Adaptor independent Cookiejar
+*      - Adapter independent Cookiejar

@@ -10,7 +10,7 @@ namespace Aura\Http\Request\Adapter;
 
 use Aura\Http as Http;
 use Aura\Http\Request;
-use Aura\Http\Headers;
+use Aura\Http\Request\Headers;
 use Aura\Http\Request\ResponseBuilder;
 use Aura\Http\Request\Multipart;
 
