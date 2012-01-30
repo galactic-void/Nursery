@@ -22,15 +22,6 @@ interface AdapterInterface
 {
     /**
      * 
-     * @param \Aura\Http\Request\ResponseBuilder $builder
-     * 
-     * @param array $options Adapter specific options and defaults.
-     * 
-     */
-    //public function __construct(ResponseBuilder $builder, array $options = []);
-
-    /**
-     * 
      * Execute the request.
      * 
      * @param Aura\Http\Request $request

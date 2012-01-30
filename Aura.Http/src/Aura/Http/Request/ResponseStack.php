@@ -15,7 +15,4 @@ namespace Aura\Http\Request;
  * @package Aura.Http
  * 
  */
-class ResponseStack extends \SplStack
-{
-    
-}
+class ResponseStack extends \SplStack {}
