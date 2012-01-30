@@ -146,7 +146,10 @@ class Response
      * @param Aura\Http\Cookies $cookies
      *
      */
-    public function __construct(Headers $headers, Cookies $cookies)
+    public function __construct(
+        Headers $headers,
+        Cookies $cookies
+    )
     {
         $this->headers = $headers;
         $this->cookies = $cookies;
@@ -285,9 +288,9 @@ class Response
     
     /**
      * 
-     * Returns the headers for the response (excluding cookies).
+     * Returns the headers for the response (not including cookies).
      * 
-     * @return Aura\Http\ResponseHeaders
+     * @return array An array of headers.
      * 
      */
     public function getHeaders()
@@ -301,16 +304,16 @@ class Response
      * 
      * Automatically resets the status text to null.
      * 
-     * @param integer $code An HTTP status code, such as 200, 302, 404, etc.
+     * @param int $code An HTTP status code, such as 200, 302, 404, etc.
      *
-     * @throws Aura\Http\Exception Status code not recognized.
+     * @throws Exception\UnknownStatus
      * 
      */
     public function setStatusCode($code)
     {
         $code = (int) $code;
         if ($code < 100 || $code > 599) {
-            throw new http\Exception("Status code '$code' not recognized.");
+            throw new Exception\UnknownStatus("Status code '$code' not recognized.");
         }
         
         $this->status_code = $code;
@@ -326,7 +329,7 @@ class Response
      * 
      * Returns the HTTP status code for the response.
      * 
-     * @return integer
+     * @return int
      * 
      */
     public function getStatusCode()
@@ -336,7 +339,8 @@ class Response
     
     /**
      * 
-     * Sets the HTTP status text for the response.
+     * Sets the HTTP status text for the response. Set the status code before
+     * calling setStatusText.
      * 
      * @param string $text The status text.
      * 
@@ -369,14 +373,14 @@ class Response
      * 
      * @return void
      *
-     * @throws Aura/Http/Exception Version not recognized.
+     * @throws Exception\UnknownVersion
      * 
      */
     public function setVersion($version)
     {
         $version = trim($version);
         if ($version != '1.0' && $version != '1.1') {
-            throw new Http/Exception("HTTP version '$version' not recognized.");
+            throw new Exception\UnknownVersion("HTTP version '$version' not recognized.");
         } else {
             $this->version = $version;
         }

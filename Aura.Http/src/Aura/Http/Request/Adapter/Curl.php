@@ -8,9 +8,8 @@
  */
 namespace Aura\Http\Request\Adapter;
 
-use Aura\Http as Http;
 use Aura\Http\Request;
-use Aura\Http\Request\Headers;
+use Aura\Http\Headers;
 use Aura\Http\Request\ResponseBuilder;
 
 /**
@@ -59,19 +58,19 @@ class Curl implements AdapterInterface
     
     /**
      * 
-     * Throws an Http\Exception if the curl extension isn't loaded.
+     * Throws an exception if the curl extension isn't loaded.
      * 
      * @param \Aura\Http\Request\ResponseBuilder $builder
      * 
      * @param array $options Adapter specific options and defaults.
      * 
-     * @throws Aura\Http\Http\Exception If Curl extension is not loaded.
+     * @throws Aura\Http\Exception If Curl extension is not loaded.
      * 
      */
     public function __construct(ResponseBuilder $builder, array $options = [])
     {
         if (! extension_loaded('curl')) {
-            throw new Http\Exception('Curl extension is not loaded.');
+            throw new Exception('Curl extension is not loaded.');
         }
         
         $this->curl_opts = $options;
@@ -128,7 +127,7 @@ class Curl implements AdapterInterface
         $this->ch = null;
         
         if (null === $response) {
-            throw new Http\Exception\ConnectionFailed(
+            throw new Exception\ConnectionFailed(
                 sprintf('Connection failed: (%s) %s', 
                     curl_errno($this->ch), 
                     curl_error($this->ch)));
@@ -137,7 +136,7 @@ class Curl implements AdapterInterface
         $stack = $this->builder->getStack();
 
         if ($stack->isEmpty()) {
-            throw new Http\Exception\EmptyResponse(
+            throw new Aura\Http\Exception\EmptyResponse(
                 sprintf('The server did not return a response. : (%s) %s', 
                     curl_errno($this->ch), 
                     curl_error($this->ch)));
@@ -152,7 +151,7 @@ class Curl implements AdapterInterface
      * 
      * @param string $url
      * 
-     * @throws Http\Exception\ConnectionFailed
+     * @throws Exception\ConnectionFailed
      * 
      */
     protected function connect($url)
@@ -160,7 +159,7 @@ class Curl implements AdapterInterface
         $this->ch = curl_init($url);
         
         if (false === $this->ch) {
-            throw new Http\Exception\ConnectionFailed(
+            throw new Exception\ConnectionFailed(
                 sprintf('Connection failed: (%s) %s', 
                     curl_errno($this->ch), 
                     curl_error($this->ch)));
@@ -264,7 +263,7 @@ class Curl implements AdapterInterface
         curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
         
         $folder = empty($options->save_to_folder) 
-                    ? false : $options->save_to_folder;
+                    ? null : $options->save_to_folder;
                     
         curl_setopt($this->ch, CURLOPT_WRITEFUNCTION, 
             // bit of a kludge but we need to tell the content callback
@@ -300,37 +299,6 @@ class Curl implements AdapterInterface
             // are honored
             if (isset($proxy->$var) && $proxy->$var !== null) {
                 curl_setopt($this->ch, $opt, $proxy->$var);
-            }
-        }
-
-        curl_setopt($this->ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
-    }
-
-    /**
-     *
-     *
-     * @param 
-     *
-     * @return 
-     *
-     */
-    protected function setSslOptions(\ArrayObject $ssl)
-    {
-        // property-name => curlopt-constant
-        $var_opt = array(
-            'ssl_verify_peer' => CURLOPT_SSL_VERIFYPEER,
-            'ssl_cafile'      => CURLOPT_CAINFO,
-            'ssl_capath'      => CURLOPT_CAPATH,
-            'ssl_local_cert'  => CURLOPT_SSLCERT,
-            'ssl_passphrase'  => CURLOPT_SSLCERTPASSWD,
-        );
-        
-        // set other behaviors
-        foreach ($var_opt as $var => $opt) {
-            // use this comparison so boolean false and integer zero
-            // values are honored
-            if (isset($ssl->$var) && $ssl->$var !== null) {
-                curl_setopt($this->ch, $opt, $ssl->$var);
             }
         }
     }

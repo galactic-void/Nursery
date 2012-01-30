@@ -481,7 +481,7 @@ class Request
 
     /**
      *
-     * Save the content of the request to this folder.
+     * Save the content of the request to this folder
      *
      * @param string $save A writeable folder.
      *
