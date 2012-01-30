@@ -1,6 +1,9 @@
 Stream adapter
-Check memory usage of @/path/file.ext
 OAuth integration?
 Optional use of Aura\Signal
-The code duplication in Response and Request\Response
-Do we care about send method in Cookies and Headers when used with Request
+Do we care about send method in Cookies and Headers when used with Request?
+Adapter independent Cookiejar
+
+Curl   - Check memory usage of @/path/file.ext
+Stream - HTTP digest auth-int support
+Stream - Store HTTP Digest challenge
