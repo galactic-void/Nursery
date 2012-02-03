@@ -8,6 +8,7 @@
  */
 namespace Aura\Http\Request;
 
+use Aura\Http as Http;
 use Aura\Http\Headers;
 use Aura\Http\Cookies;
 
@@ -183,19 +184,19 @@ class Response
             return $this->cookies;
         }
         
-        throw new Exception("No such property '$key'");
+        throw new Http\Exception("No such property '$key'");
     }
     
     /**
      * 
      * Set the cookies from the response.
      *
-     * @param Aura\Http\ResponseCookies
+     * @param Aura\Http\Cookies
      *
      * @return void
      *
      */
-    public function setCookies(ResponseCookies $cookies)
+    public function setCookies(Cookies $cookies)
     {
         $this->cookies = $cookies;
     }
@@ -252,7 +253,7 @@ class Response
         }
 
         if (isset($this->headers->{'Content-Encoding'})) {
-            $encoding = $this->headers->{'Content-Encoding'};
+            $encoding = $this->headers->{'Content-Encoding'}->getValue();
         } else {
             $encoding = false;
         }
@@ -266,7 +267,7 @@ class Response
         }
 
         if (false === $content) {
-            throw new Exception\UnableToDecompressContent($this->content);
+            throw new Http\Exception\UnableToDecompressContent($this->content);
         }
         
         return $content;
@@ -276,12 +277,12 @@ class Response
      * 
      * Sets the headers form the response (excluding cookies).
      * 
-     * @param ResponseHeaders $headers
+     * @param Aura\Http\Headers $headers
      * 
      * @return void
      * 
      */
-    public function setHeaders(ResponseHeaders $headers)
+    public function setHeaders(Headers $headers)
     {
         $this->headers = $headers;
     }
@@ -313,7 +314,7 @@ class Response
     {
         $code = (int) $code;
         if ($code < 100 || $code > 599) {
-            throw new Exception\UnknownStatus("Status code '$code' not recognized.");
+            throw new Http\Exception\UnknownStatus("Status code '$code' not recognized.");
         }
         
         $this->status_code = $code;
@@ -380,7 +381,8 @@ class Response
     {
         $version = trim($version);
         if ($version != '1.0' && $version != '1.1') {
-            throw new Exception\UnknownVersion("HTTP version '$version' not recognized.");
+            $msg = "HTTP version '$version' not recognized.";
+            throw new Http\Exception\UnknownVersion($msg);
         } else {
             $this->version = $version;
         }

@@ -66,6 +66,9 @@ class Headers implements \IteratorAggregate, \Countable
      */
     public function __get($key)
     {
+        $header = $this->factory->newInstance($key, null);
+        $key    = $header->getLabel();
+
         return $this->list[$key][0]; // todo desired behaviour?
     }
     
@@ -80,6 +83,9 @@ class Headers implements \IteratorAggregate, \Countable
      */
     public function __isset($key)
     {
+        $header = $this->factory->newInstance($key, null);
+        $key    = $header->getLabel();
+
         return isset($this->list[$key]);
     }
     
@@ -94,6 +100,9 @@ class Headers implements \IteratorAggregate, \Countable
      */
     public function __unset($key)
     {
+        $header = $this->factory->newInstance($key, null);
+        $key    = $header->getLabel();
+
         unset($this->list[$key]);
     }
     
@@ -106,7 +115,7 @@ class Headers implements \IteratorAggregate, \Countable
      */
     public function count()
     {
-        return count($this->list, COUNT_RECURSIVE);
+        return count($this->list, COUNT_RECURSIVE) - count($this->list);
     }
     
     /**
@@ -116,13 +125,16 @@ class Headers implements \IteratorAggregate, \Countable
      * @param string $label
      * 
      * @param boolean $list If true an array of `Aura\Http\Header` is returned 
-     * else a `Aura\Http\Header` is return containing the first result.
+     * else a `Aura\Http\Header` is return with the first result.
      * 
      * @return Aura\Http\Header|array
      * 
      */
     public function get($label, $list = true)
     {
+        $header = $this->factory->newInstance($label, null);
+        $label  = $header->getLabel();
+
         if ($list) {
             return $this->list[$label];
         }

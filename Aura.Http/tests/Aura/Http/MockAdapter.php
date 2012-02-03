@@ -1,44 +1,20 @@
 <?php
 
-namespace Aura\Http\RequestAdapter;
+namespace Aura\Http\Request\Adapter;
 
-class MockAdapter implements \Aura\Http\AbstractRequest
+use Aura\Http\Request;
+
+class MockAdapter implements \Aura\Http\Request\Adapter\AdapterInterface
 {
-    public static $options;
-    public static $headers;
-    public static $uri;
-    public static $method;
-    public static $version;
-    public static $content;
+    public static $request;
 
-
-    public function __construct(
-         \Aura\Http\RequestResponse $response, 
-         array $options = array())
+    public function __construct()
     {
-        self::$options = array();
-        self::$headers = array();
-        self::$uri     = '';
-        self::$method  = '';
-        self::$content = '';
-        self::$version = '';
+        self::$request = [];
     }
 
-    public function connect($url)
+    public function exec(Request $request)
     {
-        self::$uri     = $url;
-    }
-
-    public function setOptions(\ArrayObject $options)
-    {
-        self::$options = $options;
-    }
-
-    public function exec($method, $version, array $headers, $content)
-    {
-        self::$method  = $method;
-        self::$version = $version;
-        self::$headers = $headers;
-        self::$content = $content;
+        self::$request = $request;
     }
 }

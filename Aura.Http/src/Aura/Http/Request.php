@@ -382,7 +382,7 @@ class Request
     /**
      *
      * Save the cookies to a file. If $file is false the cookie file 
-     * will be deleted. Must be a full path. 
+     * will be deleted. Must be a full path and writeable by PHP. 
      *
      * @param string $file 
      *
@@ -492,8 +492,7 @@ class Request
      */
     public function saveTo($save)
     {
-        $save = trim($save, DIRECTORY_SEPARATOR);
-        $save = realpath($save);
+        $save = rtrim($save, DIRECTORY_SEPARATOR);
 
         if (is_dir($save) && is_writeable($save)) {
             $this->options->save_to_folder = $save;
@@ -663,7 +662,7 @@ class Request
         if ($val === null || $val === false) {
             // delete the key
             unset($this->headers->$key);
-        } else if ($replace || empty($this->headers->$key)) {
+        } else if ($replace) {
             // replacement, or first instance of the key
             $this->headers->set($key, $val);
         } else {
