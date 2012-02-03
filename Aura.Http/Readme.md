@@ -14,15 +14,23 @@
 
     require_once 'src.php';
 
-    $response = new Request\Response(new Http\Headers(new HeaderFactory), new Http\Cookies(new CookieFactory));
-    $request = new Request\Adapter\Curl(new Request\ResponseBuilder($response, new StackFactory));
+    $response         = new Request\Response(new Http\Headers(new HeaderFactory), new Http\Cookies(new CookieFactory));
+    $response_builder = new Request\ResponseBuilder($response, new StackFactory)
+
+Using the Curl adapter:
+
+    $request = new Request\Adapter\Curl($response_builder);
+
+Using the Stream adapter:
+
+    $request = new Request\Adapter\Stream($response_builder);
 
 ## Making a Request
 Making a GET request to Github to list Auras repositories in JSON format:
 
     $response = $request->get('http://github.com/api/v2/json/repos/show/auraphp');
 
-The `$response` is a `\SplStack` containing all the responses including redirects, the stack order is last in first out. Each item in the stack is a `\Aura\Http\RequestResponse` object.
+The `$response` is a `Aura\Http\Request\ResponseStack` containing all the responses including redirects, the stack order is last in first out. Each item in the stack is a `\Aura\Http\RequestResponse` object.
 
 Listing the repositories as an array:
 
