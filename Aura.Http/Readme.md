@@ -15,15 +15,18 @@
     require_once 'src.php';
 
     $response         = new Request\Response(new Http\Headers(new HeaderFactory), new Http\Cookies(new CookieFactory));
-    $response_builder = new Request\ResponseBuilder($response, new StackFactory)
-
-Using the Curl adapter:
+    $response_builder = new Request\ResponseBuilder($response, new StackFactory);
 
     $request = new Request\Adapter\Curl($response_builder);
 
-Using the Stream adapter:
+## Available Adapters
 
-    $request = new Request\Adapter\Stream($response_builder);
+Curl
+:    `Request\Adapter\Curl`
+
+Stream
+:    `Request\Adapter\Stream` 
+     Note: Stream is not suitable for uploading large files. When uploading files the entire file(s) is loaded into memory, this is due to a limitation in PHP HTTP Streams.
 
 ## Making a Request
 Making a GET request to Github to list Auras repositories in JSON format:

@@ -42,6 +42,7 @@ class Multipart
     /**
      * 
      * Setup the object.
+     * 
      */
     public function __construct()
     {
@@ -105,7 +106,7 @@ class Multipart
      */
     public function reset()
     {
-        $this->boundary = '---AURAHTTPREQUEST-' . sha1(microtime(true));
+        $this->boundary = 'AURAHTTPREQUEST-' . sha1(microtime(true));
 
         foreach ($this->content as $content) {
             if (is_resource($content)) {

@@ -106,6 +106,16 @@ class HeadersTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $headers->getAll());
     }
     
+    public function testAddWithHeader()
+    {
+        $headers = $this->newHeaders();
+        $header  = new Header('Foo', 'Bar');
+
+        $headers->add($header, null);
+
+        $this->assertSame($header, $headers->get('Foo', false));
+    }
+    
     public function testSet()
     {
         $headers = $this->newHeaders();
@@ -119,6 +129,16 @@ class HeadersTest extends \PHPUnit_Framework_TestCase
         ];
 
         $this->assertEquals($expected, $headers->getAll());
+    }
+    
+    public function testSetWithHeader()
+    {
+        $headers = $this->newHeaders();
+        $header  = new Header('Foo', 'Bar');
+
+        $headers->set($header, null);
+
+        $this->assertSame($header, $headers->get('Foo', false));
     }
     
     public function testSetAll()

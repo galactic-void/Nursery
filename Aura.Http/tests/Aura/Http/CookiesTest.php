@@ -71,7 +71,7 @@ class CookiesTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse(isset($cookies->foo_bar));
     }
     
-    public function testcount()
+    public function testCount()
     {
         $cookies = $this->newCookies();
 
@@ -118,6 +118,16 @@ class CookiesTest extends \PHPUnit_Framework_TestCase
         ];
 
         $this->assertEquals($expected, $cookies->getAll());
+    }
+    
+    public function testAddWithCookie()
+    {
+        $cookies = $this->newCookies(null);
+        $cookie  = new Cookie('Foo', 'Bar', null, null, null, null, null);
+
+        $cookies->set($cookie);
+
+        $this->assertSame($cookie, $cookies->Foo);
     }
     
     public function testSetFromString()

@@ -108,7 +108,7 @@ class Cookie
     
     public function getPath()
     {
-        return $this->parse_url(url);
+        return $this->path;
     }
     
     public function getDomain()
@@ -129,10 +129,11 @@ class Cookie
     public function toString()
     {
         $cookie[] = "$this->name=$this->value";
+        $parts    = ['expires', 'path', 'domain'];
 
-        foreach(['expires', 'path', 'domain'] as $part) {
+        foreach($parts as $part) {
             if (! empty($this->$part)) {
-                $cookie[] = "$part=$this->$part";
+                $cookie[] = $part . '=' . $this->$part;
             }
         }
 
