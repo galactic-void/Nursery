@@ -57,7 +57,7 @@ class Headers implements \IteratorAggregate, \Countable
     
     /**
      * 
-     * Get a header.
+     * Get a header. If a header has multiple values the first value is returned.
      * 
      * @param string $key 
      * 
@@ -69,7 +69,7 @@ class Headers implements \IteratorAggregate, \Countable
         $header = $this->factory->newInstance($key, null);
         $key    = $header->getLabel();
 
-        return $this->list[$key][0]; // todo desired behaviour?
+        return $this->list[$key][0];
     }
     
     /**
