@@ -150,10 +150,10 @@ class Cookies implements \IteratorAggregate, \Countable
      * @return void
      * 
      */
-    public function setFromString($str)
+    public function setFromString($str, $default_url = null)
     {
         $cookie = $this->factory->newInstance();
-        $cookie->setFromString($str);
+        $cookie->setFromString($str, $default_url);
 
         $this->list[$cookie->getName()] = $cookie;
     }

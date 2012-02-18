@@ -82,10 +82,12 @@ class Cookie
             $defaults = parse_url($default_url);
             $this->secure = (isset($defaults['scheme']) && 
                              'https' == $defaults['scheme']);
-            $this->domain = isset($defaults['host']) ? 
-                                $defaults['host'] : null;
-            $this->path   = isset($defaults['path']) ? 
-                                $defaults['path'] : null;
+            $this->domain = isset($defaults['host']) ? $defaults['host'] : null;
+
+            if (isset($defaults['path'])) { 
+                $this->path = substr($defaults['path'], 0, 
+                                     strrpos($defaults['path'], '/'));
+            }
         }
 
         // get the list of elements
