@@ -755,12 +755,9 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $req->setCookie("cookie-name", 'value2');
         $req->send();
         
-        $expected = ['cookie=value', 'cookie-name=value2; HttpOnly'];
+        $expected = 'cookie=value; cookie-name=value2';
 
-        foreach (Mock::$request->headers->get('Set-Cookie') as $i => $value) {
-            $this->assertSame('Set-Cookie', $value->getLabel());
-            $this->assertSame($expected[$i], $value->getValue());
-        }
+        $this->assertSame($expected, Mock::$request->headers->Cookie->getValue());
     }
 
     public function testSetRefererReturnsRequest()

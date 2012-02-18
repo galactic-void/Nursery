@@ -371,9 +371,13 @@ class Request
         
         // bake cookies
         if (count($this->cookies)) {
+            $list = [];
+
             foreach ($this->cookies as $cookie) {
-                $this->headers->add('Set-Cookie', $cookie->toString());
+                $list[] = "{$cookie->getName()}={$cookie->getValue()}";
             }
+
+            $this->headers->add('Cookie', implode('; ', $list));
         }
         
         return $this->adapter->exec($this);

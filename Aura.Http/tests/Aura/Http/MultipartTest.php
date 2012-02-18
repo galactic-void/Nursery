@@ -27,6 +27,25 @@ class MultipartTest extends \PHPUnit_Framework_TestCase
         clone $multi;
     }
 
+    public function test__toStringCallsToString()
+    {
+        $multi = $this->getMock('\Aura\Http\Request\Multipart', ['toString']);
+        
+        $multi->expects($this->once())
+              ->method('toString');
+
+        $multi->__toString();
+    }
+
+    public function testResetClosesOpenResources()
+    {
+        $multi = new Multipart;
+        $file  = __DIR__ . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'gziphttp';
+
+        $multi->add(['test' => "@{$file}"]);
+        $multi->reset(); // todo how to test for this?
+    }
+
     public function testAddParams()
     {
         $multi = new Multipart;
@@ -72,4 +91,14 @@ class MultipartTest extends \PHPUnit_Framework_TestCase
     }
 
 
+    public function testAddFileDoesNotExistException()
+    {
+        $this->setExpectedException('\Aura\Http\Exception\FileDoesNotExist');
+
+        $multi = new Multipart;
+        $file  = '/invalid/file';
+
+        $multi->add(['file' => "@$file"]);
+
+    }
 }

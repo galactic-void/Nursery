@@ -31,6 +31,24 @@ class CookieTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($cookie->httponly);
     }
 
+    public function test__sleep()
+    {
+        $org_cookie = $this->newCookie('cname', 'cvalue', 42, '/path', '.example.com', false, true);
+        
+        $cookie = serialize($org_cookie);
+        $cookie = unserialize($cookie);
+
+        $this->assertEquals('cname',        $cookie->name);
+        $this->assertEquals('cvalue',       $cookie->value);
+        $this->assertEquals(42,             $cookie->expire);
+        $this->assertEquals(42,             $cookie->expires);
+        $this->assertEquals('/path',        $cookie->path);
+        $this->assertEquals('.example.com', $cookie->domain);
+
+        $this->assertFalse($cookie->secure);
+        $this->assertTrue($cookie->httponly);
+    }
+
     public function testSetFromString()
     {
         $cookie = $this->newCookie();
@@ -108,5 +126,32 @@ class CookieTest extends \PHPUnit_Framework_TestCase
         $cookie = $this->newCookie('cname', 'cvalue');
 
         $this->assertEquals('cname=cvalue', $cookie->__toString());
+    }
+
+    public function testIsMatch()
+    {
+        $cookie = $this->newCookie('cname', 'cvalue', 42, '/path', '.example.com');
+
+        $this->assertTrue($cookie->isMatch('http', 'www.example.com', '/path'));
+        $this->assertFalse($cookie->isMatch('http', 'www.example2.com', '/path'));
+        $this->assertFalse($cookie->isMatch('https', 'www.example.com', '/path'));
+        $this->assertFalse($cookie->isMatch('http', 'www.example.com', '/newpath'));
+    }
+    
+    public function testIsExpired()
+    {
+        $cookie = $this->newCookie('cname', 'cvalue', time() + 1, '/path', '.example.com');
+
+        $this->assertFalse($cookie->isExpired());
+        sleep(2);
+        $this->assertTrue($cookie->isExpired());
+    }
+    
+    public function testIsExpiredSessionCookie()
+    {
+        $cookie = $this->newCookie('cname', 'cvalue');
+
+        $this->assertFalse($cookie->isExpired());
+        $this->assertTrue($cookie->isExpired(true));
     }
 }

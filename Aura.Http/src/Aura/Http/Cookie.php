@@ -53,6 +53,20 @@ class Cookie
     }
 
     /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    public function __sleep()
+    {
+        return ['name',   'value',  'expires', 'path', 
+                'domain', 'secure', 'httponly'];
+    }
+
+    /**
      * 
      * Parses the value of the "Set-Cookie" header and sets it.
      * 
@@ -125,6 +139,51 @@ class Cookie
     {
         return $this->httponly;
     }
+
+    /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    public function isMatch($scheme, $domain, $path)
+    {
+        if ('https' == $scheme && ! $this->secure) {
+            return false;
+        }
+
+        if (! $this->isDomainMatch($domain)) {
+            return false;
+        }
+
+        if ($this->path && 0 === strpos($path, $this->path)) {
+            // we have a match
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    public function isExpired($expire_session_cookies = false)
+    {
+        if (! $this->expires && $expire_session_cookies) {
+            return true;
+        } else if (! $this->expires) {
+            return false;
+        }
+
+        return $this->expires < time();
+    }
     
     public function toString()
     {
@@ -151,5 +210,31 @@ class Cookie
     public function __toString()
     {
         return $this->toString();
+    }
+
+    /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    protected function isDomainMatch($domain)
+    {
+        $cookie_domain = strtolower($this->domain);
+        $host_domain   = strtolower($domain);
+
+        if (! $cookie_domain) {
+            return true; // todo What does the spec say when Set-Cookie has no domain
+        }
+
+        if ('.' == $cookie_domain[0]) {
+            $cookie_domain = substr($cookie_domain, 1);
+        }
+
+        return ($cookie_domain == $host_domain ||
+                preg_match('/\.' . preg_quote($cookie_domain) . '$/', 
+                           $host_domain));
     }
 }

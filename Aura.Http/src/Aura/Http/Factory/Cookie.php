@@ -26,7 +26,7 @@ class Cookie
      */
     protected $params = [
         'value'    => null,
-        'expire'   => null,
+        'expire'   => 0,
         'path'     => null,
         'domain'   => null,
         'secure'   => false,

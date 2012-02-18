@@ -25,7 +25,7 @@ Curl
 :    `Request\Adapter\Curl`
 
 Stream
-:    `Request\Adapter\Stream` 
+:    `Request\Adapter\Stream`   
      Note: Stream is not suitable for uploading large files. When uploading files the entire file(s) is loaded into memory, this is due to a limitation in PHP HTTP Streams.
 
 ## Making a Request
@@ -44,11 +44,6 @@ Listing the repositories as an array:
     
     $response = $request->setContent(['name' => 'value', 'foo' => ['bar']])
                         ->post('http://localhost/submit.php');
-
-## Exceptions
-Exceptions thrown by Request:  
-
-Exceptions thrown by RequestResponse:
 
  
 ## Downloading a File
@@ -86,8 +81,15 @@ HTTP Digest:
                         ->get('http://localhost/private/index.php');
 
 ## Cookies and cookie authorization
- todo
- 
-## Changing the default options
- todo
+ Note: Currently the CookieJar file that Curl creates is incompatible with the Streams CookieJar file and vis versa.
+
+ Logging into a site using cookies (Although if the site has CSRF protection in place this won't work):
+
+    $request->setCookieJar('/path/to/cookiejar')
+            ->setContent(['usr_name' => 'name', 'usr_pass' => 'pass'])
+            ->post('http://www.example.com/login');
+
+
+    $response = $request->setCookieJar('/path/to/cookiejar')
+                        ->get('http://www.example.com/');
  

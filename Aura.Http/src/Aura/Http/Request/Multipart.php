@@ -8,6 +8,8 @@
  */
 namespace Aura\Http\Request;
 
+use \Aura\Http\Exception as Exception;
+
 /**
  * 
  * A simple HTTP multipart generator.
@@ -173,39 +175,6 @@ class Multipart
     
     /**
      * 
-     * Build and write the multipart content.
-     * 
-     * @param resource $stream
-     * 
-     * @return integer The length written
-     * 
-     * @throws Aura\Http\Exception If the argument `$stream` is not a resource.
-     * 
-     */
-    public function write($stream)
-    {
-        if (! is_resource($stream)) {
-            throw new Exception('The argument `$stream` must be a resource.');
-        }
-
-        $written         = 0;
-        $this->content[] = "--{$this->getBoundary()}--\r\n";
-
-        foreach ($this->content as $content) {
-            if (is_resource($content)) {
-                while (! feof($content)) {
-                    $written += fwrite($stream, fread($content, 8192));
-                }
-            } else {
-                $written += fwrite($stream, $content);
-            }
-        }
-
-        return $written;
-    }
-    
-    /**
-     * 
      * Add parameters.
      * 
      * Format: ['variable_name' => 'value']
@@ -242,7 +211,7 @@ class Multipart
     {
         foreach ($files as $name => $file) {
             if (! file_exists($file) || ! is_file($file)) {
-                throw new Exception("File does not exist `$file`.");
+                throw new Exception\FileDoesNotExist("File does not exist `$file`.");
             }
             
             $filename = basename($file);
@@ -260,7 +229,7 @@ class Multipart
             
             $this->content[] = $encoded;
             $this->length   += strlen($encoded);
-            $this->content[] = fopen($file, 'r');//xxx fla
+            $this->content[] = fopen($file, 'r');
             $this->length   += filesize($file);
             $this->content[] = "\r\n";
             $this->length   += 2; // for \r\n

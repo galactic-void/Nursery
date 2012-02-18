@@ -61,12 +61,15 @@ class Stream implements AdapterInterface
      */
     protected $url;
 
+    protected $is_new_session = true;
+
     
     /**
      * 
      * @param \Aura\Http\Request\ResponseBuilder $builder
      * 
-     * @param array $options Adapter specific options and defaults.
+     * @param array $options Adapter specific option
+     * s and defaults.
      * 
      */
     public function __construct(
@@ -181,6 +184,24 @@ class Stream implements AdapterInterface
                     'err num', 
                     'err msg')); // todo + time out?
         }
+
+        // Save the response cookies
+        if ($request->options->cookiejar) {
+            $cookiejar = [];
+
+            foreach ($stack as $response) {
+                $cookiejar += $response->getCookies()->getAll();
+            }
+
+            // Add the existing cookies
+            if (file_exists($request->options->cookiejar)) {
+                $cookiejar += unserialize(
+                               file_get_contents($request->options->cookiejar));
+            }
+
+            $cookiejar = serialize($cookiejar);
+            file_put_contents($request->options->cookiejar, $cookiejar);
+        }
         
         return $stack;
     }
@@ -215,7 +236,33 @@ class Stream implements AdapterInterface
             } 
         }
 
-        // todo cookiejar
+        // Load the contents of the cookie jar
+        if ($request->options->cookiejar && 
+            file_exists($request->options->cookiejar)) {
+
+            $cookies = file_get_contents($request->options->cookiejar);
+            $cookies = unserialize($cookies);
+            $url     = parse_url($request->url);
+            $path    = isset($url['path']) ? $url['path'] : '/';
+            $list    = [];
+
+            foreach ($cookies as $cookie) {
+                if ($cookie->isMatch($url['scheme'], $url['host'], $path) &&
+                    ! $cookie->isExpired($this->is_new_session)) {
+
+                    $this->is_new_session = false;
+                    $list[] = "{$cookie->getName()}={$cookie->getValue()}";
+                }
+            }
+            if ($list) {
+                // Add the cookies set through Request
+                if (isset($request->headers->Cookie)) {
+                    $list[] = $request->headers->Cookie;
+                }
+
+                $request->headers->set('Cookie', implode('; ', $list));
+            }
+        }
         
         if (isset($request->options->timeout)) {
             $http['timeout'] = $request->options->timeout;
@@ -504,7 +551,7 @@ class Stream implements AdapterInterface
                   'response="%s"';
 
         if ($challenge['opaque']) {
-            $header .= 'opaque="%s"';
+            $header .= ', opaque="%s"';
         }
 
         return sprintf($header, 

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/src/Aura/Http/Exception.php';
 require_once __DIR__ . '/src/Aura/Http/Exception/InvalidHandle.php';
 require_once __DIR__ . '/src/Aura/Http/Exception/NotWriteable.php';
+require_once __DIR__ . '/src/Aura/Http/Exception/FileDoesNotExist.php';
 require_once __DIR__ . '/src/Aura/Http/Exception/FullUrlExpected.php';
 require_once __DIR__ . '/src/Aura/Http/Exception/UnableToDecompressContent.php';
 require_once __DIR__ . '/src/Aura/Http/Exception/UnknownAuthType.php';

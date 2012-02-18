@@ -32,7 +32,9 @@ class ResponseBuilder
      *
      */
     public function __construct(
-        Response $response, ResponseStackFactory $factory)
+        Response $response, 
+        ResponseStackFactory $factory
+    )
     {
         $this->response = $response;
         $this->factory  = $factory;
@@ -79,13 +81,13 @@ class ResponseBuilder
      */
     public function saveContentCallback($ch, $content, $save_to_folder)
     {
-        if($save_to_folder) {
+        if ($save_to_folder) {
             
             $is_resource = is_resource($this->file_handle);
             
             // file_handle is not a resource, extract a filename from the
             // headers else generate a name, then open the file.
-            if(! $is_resource) {
+            if (! $is_resource) {
                 
                 if (isset($this->response->headers->{'Content-Disposition'})) {
                     
@@ -125,7 +127,7 @@ class ResponseBuilder
      * 
      */
     public function saveHeaderCallback($ch, $header)
-    { 
+    {
         $length = strlen($header);
         
         // remove line endings
