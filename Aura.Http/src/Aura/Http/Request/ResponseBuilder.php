@@ -24,6 +24,7 @@ class ResponseBuilder
     protected $stack;
     protected $file;
     protected $file_handle;
+    protected $request_url;
 
 
     /**
@@ -39,6 +40,19 @@ class ResponseBuilder
         $this->response = $response;
         $this->factory  = $factory;
         $this->stack    = $this->factory->newInstance();
+    }
+
+    /**
+     *
+     *
+     * @param 
+     *
+     * @return 
+     *
+     */
+    public function setRequestUrl($url)
+    {
+        $this->request_url = $url;
     }
 
     /**
@@ -169,7 +183,7 @@ class ResponseBuilder
         // is this a set-cookie header?
         if (strtolower($label) == 'set-cookie') {
             
-            $this->response->cookies->setFromString($value);
+            $this->response->cookies->setFromString($value, $this->request_url);
         } elseif ($label) {
             // set the header, allow multiples
             $this->response->headers->add($label, $value);

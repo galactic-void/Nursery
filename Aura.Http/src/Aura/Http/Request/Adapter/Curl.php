@@ -89,6 +89,7 @@ class Curl implements AdapterInterface
      */
     public function exec(Request $request)
     {
+        $this->builder->setRequestUrl($request->url);
         $this->connect($request->url);
         $this->setOptions($request->options); 
         $this->setProxy($request->proxy);

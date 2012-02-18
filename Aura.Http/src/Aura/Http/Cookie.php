@@ -75,8 +75,19 @@ class Cookie
      * @return void
      * 
      */
-    public function setFromString($text)
+    public function setFromString($text, $default_url = null)
     {
+        // setup defaults
+        if ($default_url) {
+            $defaults = parse_url($default_url);
+            $this->secure = (isset($defaults['scheme']) && 
+                             'https' == $defaults['scheme']);
+            $this->domain = isset($defaults['host']) ? 
+                                $defaults['host'] : null;
+            $this->path   = isset($defaults['path']) ? 
+                                $defaults['path'] : null;
+        }
+
         // get the list of elements
         $list = explode(';', $text);
         
@@ -226,7 +237,7 @@ class Cookie
         $host_domain   = strtolower($domain);
 
         if (! $cookie_domain) {
-            return true; // todo What does the spec say when Set-Cookie has no domain
+            return false; 
         }
 
         if ('.' == $cookie_domain[0]) {

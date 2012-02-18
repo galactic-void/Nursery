@@ -37,15 +37,6 @@ class Stream implements AdapterInterface
      * 
      */
     protected $multipart;
-    
-    /**
-     * 
-     * List of the default options.
-     * 
-     * @var array
-     * 
-     */
-    protected $opts;
 
     /**
      * 
@@ -79,7 +70,6 @@ class Stream implements AdapterInterface
             throw new Http\Exception($msg);
         }
 
-        $this->opts      = $options;
         $this->builder   = $builder;
         $this->multipart = $multipart;
     }
@@ -101,6 +91,7 @@ class Stream implements AdapterInterface
         $this->url    = $request->url;
         $has_files    = false;
 
+        $this->builder->setRequestUrl($request->url);
         $this->prepareContext($request);
 
         // Set the content type
