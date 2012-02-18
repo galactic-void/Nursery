@@ -68,14 +68,11 @@ class Stream implements AdapterInterface
      * 
      * @param \Aura\Http\Request\ResponseBuilder $builder
      * 
-     * @param array $options Adapter specific option
-     * s and defaults.
      * 
      */
     public function __construct(
         ResponseBuilder $builder, 
-        Multipart $multipart,
-        array $options = [])
+        Multipart $multipart)
     {
         if (! ini_get('allow_url_fopen')) {
             $msg = 'The PHP ini setting `allow_url_fopen` is off';

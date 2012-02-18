@@ -217,7 +217,7 @@ class Request
      * 
      * @param \Aura\Http\Cookies $cookies
      * 
-     * @param array $opts Default options, these options survive cloning and
+     * @param array $options Default options, these options survive cloning and
      * reset().
      * 
      */
@@ -225,7 +225,7 @@ class Request
         Adapter\AdapterInterface $adapter, 
         Headers $headers,
         Cookies $cookies,
-        array $opts = [])
+        array $options = [])
     {
         $this->adapter = $adapter;
         $this->cookies = $cookies;
@@ -234,8 +234,8 @@ class Request
         // Use reset to setup the default options.
         $this->reset();
         
-        if ($opts) {
-            $this->default_opts = array_merge($this->default_opts, $opts);
+        if ($options) {
+            $this->default_opts = array_merge($this->default_opts, $options);
         }
     }
 

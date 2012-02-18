@@ -13,11 +13,15 @@
     use Aura\Http\Factory\ResponseStack as StackFactory;
 
     require_once 'src.php';
+    
+    $headers = new Http\Headers(new HeaderFactory);
+    $cookies = new Http\Cookies(new CookieFactory);
 
-    $response         = new Request\Response(new Http\Headers(new HeaderFactory), new Http\Cookies(new CookieFactory));
+    $response         = new Request\Response($headers, $cookies);
     $response_builder = new Request\ResponseBuilder($response, new StackFactory);
 
-    $request = new Request\Adapter\Curl($response_builder);
+    $adapter = new Request\Adapter\Curl($response_builder);
+    $request = new Request($adapter, $headers, $cookies);
 
 ## Available Adapters
 
