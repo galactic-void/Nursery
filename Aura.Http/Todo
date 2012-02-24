@@ -1,8 +1,0 @@
-Socket adaptor
-
-Stream - Proxy Digest auth
-Stream - Store Digest auth challenge
-Stream - HTTP digest auth-ini support
-Stream - isDomainMatch when no domain has been specified
-*      - Adaptor independent CookieJar - match Curls CookieJar
-       - Curls Format:  #HttpOnly_.domain.com \t tailmatch \t path \t secure \t expires \t name \t value\n
